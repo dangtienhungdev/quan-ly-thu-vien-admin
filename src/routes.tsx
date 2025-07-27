@@ -8,8 +8,10 @@ import CategoriesPage from './pages/categories/page';
 import Dashboard from './pages/dashboard/page';
 import LoginPage from './pages/login/page';
 import NotFound from './pages/not-found';
+import PhysicalBooksPage from './pages/physical-books/page';
 import PublishersPage from './pages/publishers/page';
 import ReaderTypes from './pages/reader-types/page';
+import ReadersPage from './pages/readers/page';
 import UserPage from './pages/users/page';
 
 // Root layout that provides AuthProvider context
@@ -63,6 +65,14 @@ const routes = createBrowserRouter([
 					{
 						path: '/authors',
 						element: <AuthorsPage />,
+					},
+					{
+						path: '/physical-books',
+						element: <PhysicalBooksPage />,
+					},
+					{
+						path: '/readers',
+						element: <ReadersPage />,
 					},
 				],
 			},

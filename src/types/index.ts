@@ -16,9 +16,6 @@ export * from './categories';
 // Export all types from publishers
 export * from './publishers';
 
-// Export all types from authors
-export * from './authors';
-
 // Export all types from readers
 export * from './readers';
 
@@ -33,5 +30,5 @@ export type {
 	UpdateReaderTypeRequest,
 } from './reader-types';
 
-// Export all types from categories
-export * from './categories';
+// Export all types from user
+export * from './user.type';

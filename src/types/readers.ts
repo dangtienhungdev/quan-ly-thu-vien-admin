@@ -1,91 +1,76 @@
-import type { BaseEntity, PaginatedResponse } from './common';
+import type { PaginationQuery } from './common';
 
-export interface Reader extends BaseEntity {
-	user_id: string;
-	card_number: string;
-	full_name: string;
-	date_of_birth: string;
+export type PaginationReaderQuery = PaginationQuery;
+
+export type Reader = {
+	id: string;
+	fullName: string;
+	dob: string;
 	gender: 'male' | 'female' | 'other';
-	phone: string;
-	email: string;
 	address: string;
-	reader_type_id: string;
-	card_issue_date: string;
-	card_expiry_date: string;
-	is_active: boolean;
-	reader_type?: ReaderType;
-	user?: ReaderUser;
-}
-
-export interface CreateReaderRequest {
-	user_id: string;
-	full_name: string;
-	date_of_birth: string;
-	gender: 'male' | 'female' | 'other';
 	phone: string;
-	email: string;
-	address: string;
-	reader_type_id: string;
-	card_issue_date?: string;
-	card_expiry_date?: string;
-	is_active?: boolean;
-}
-
-export interface UpdateReaderRequest {
-	full_name?: string;
-	date_of_birth?: string;
-	gender?: 'male' | 'female' | 'other';
-	phone?: string;
-	email?: string;
-	address?: string;
-	reader_type_id?: string;
-	card_issue_date?: string;
-	card_expiry_date?: string;
-	is_active?: boolean;
-}
-
-export interface ReaderSearchQuery {
-	q: string;
-	page?: number;
-	limit?: number;
-}
-
-export interface ExpiringSoonQuery {
-	days?: number;
-	page?: number;
-	limit?: number;
-}
-
-export interface ReaderByTypeQuery {
+	cardNumber: string;
+	cardIssueDate: string;
+	cardExpiryDate: string;
+	isActive: boolean;
+	userId: string;
 	readerTypeId: string;
-	page?: number;
-	limit?: number;
-}
+	readerType?: {
+		id: string;
+		typeName: string;
+		description?: string;
+	};
+	user?: {
+		id: string;
+		username: string;
+		email: string;
+		userCode: string;
+	};
+	created_at: string;
+	updated_at: string;
+};
 
-export interface GenerateCardNumberResponse {
-	card_number: string;
-}
+export type CreateReaderRequest = {
+	fullName: string;
+	dob: string;
+	gender: 'male' | 'female' | 'other';
+	address: string;
+	phone: string;
+	userId: string;
+	readerTypeId: string;
+	cardNumber?: string;
+	cardIssueDate?: string;
+	cardExpiryDate: string;
+};
 
-export type ReadersResponse = PaginatedResponse<Reader>;
-export type ReaderResponse = Reader;
-export type ExpiredCardsResponse = PaginatedResponse<Reader>;
-export type ExpiringSoonResponse = PaginatedResponse<Reader>;
-export type ReadersByTypeResponse = PaginatedResponse<Reader>;
+export type UpdateReaderRequest = {
+	fullName?: string;
+	dob?: string;
+	gender?: 'male' | 'female' | 'other';
+	address?: string;
+	phone?: string;
+	readerTypeId?: string;
+	cardExpiryDate?: string;
+};
 
-// Related types
-export interface ReaderType {
-	id: string;
-	type_name: string;
-	description?: string;
-	max_books: number;
-	max_days: number;
-	fee_per_day: number;
-}
+export type SearchReaderQuery = PaginationQuery & {
+	q?: string;
+};
 
-export interface ReaderUser {
-	id: string;
-	username: string;
-	email: string;
-	role: 'admin' | 'user';
-	accountStatus: 'active' | 'inactive' | 'banned';
-}
+export type ExpiringSoonQuery = PaginationQuery & {
+	days?: number;
+};
+
+export type RenewCardRequest = {
+	newExpiryDate: string;
+};
+
+export type CardExpiryCheck = {
+	isExpired: boolean;
+	daysUntilExpiry: number;
+	expiryDate: string;
+};
+
+export type GeneratedCardNumber = {
+	cardNumber: string;
+};
