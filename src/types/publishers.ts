@@ -1,69 +1,75 @@
-import type { BaseEntity, PaginatedResponse } from './common';
+import type { PaginationQuery } from './common';
 
-export interface Publisher extends BaseEntity {
-	publisher_name: string;
+export type PaginationPublisherQuery = PaginationQuery;
+
+export type Publisher = {
+	id: string;
+	publisherName: string;
 	slug: string;
-	address?: string;
-	phone?: string;
-	email?: string;
+	address: string;
+	phone: string;
+	email: string;
 	website?: string;
 	description?: string;
-	country: string;
-	established_date?: string;
-	is_active: boolean;
-}
+	country?: string;
+	establishedDate?: string;
+	isActive: boolean;
+	createdAt: string;
+	updatedAt: string;
+};
 
-export interface CreatePublisherRequest {
-	publisher_name: string;
-	address?: string;
-	phone?: string;
-	email?: string;
+export type CreatePublisherRequest = {
+	publisherName: string;
+	address: string;
+	phone: string;
+	email: string;
 	website?: string;
 	description?: string;
-	country: string;
-	established_date?: string;
-	is_active?: boolean;
-}
+	country?: string;
+	establishedDate?: string;
+	isActive?: boolean;
+};
 
-export interface UpdatePublisherRequest {
-	publisher_name?: string;
+export type CreateManyPublishersRequest = {
+	publishers: CreatePublisherRequest[];
+};
+
+export type UpdatePublisherRequest = {
+	publisherName?: string;
 	address?: string;
 	phone?: string;
 	email?: string;
 	website?: string;
 	description?: string;
 	country?: string;
-	established_date?: string;
-	is_active?: boolean;
-}
+	establishedDate?: string;
+	isActive?: boolean;
+};
 
-export interface BulkCreatePublisherRequest {
-	publishers: CreatePublisherRequest[];
-}
+export type SearchPublisherQuery = PaginationQuery & {
+	q?: string;
+};
 
-export interface BulkCreatePublisherError {
-	index: number;
-	publisher_name: string;
-	error: string;
-}
-
-export interface BulkCreatePublisherSummary {
+export type PublisherStats = {
 	total: number;
-	success: number;
-	failed: number;
-}
+	active: number;
+	inactive: number;
+	byCountry: Array<{
+		country: string;
+		count: number;
+	}>;
+};
 
-export interface BulkCreatePublisherResponse {
+export type BulkCreateResult = {
 	success: Publisher[];
-	errors: BulkCreatePublisherError[];
-	summary: BulkCreatePublisherSummary;
-}
-
-export interface PublisherSearchQuery {
-	q: string;
-	page?: number;
-	limit?: number;
-}
-
-export type PublishersResponse = PaginatedResponse<Publisher>;
-export type PublisherResponse = Publisher;
+	errors: Array<{
+		index: number;
+		publisherName: string;
+		error: string;
+	}>;
+	summary: {
+		total: number;
+		success: number;
+		failed: number;
+	};
+};

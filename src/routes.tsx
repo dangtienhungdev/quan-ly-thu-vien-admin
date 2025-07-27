@@ -7,6 +7,7 @@ import CategoriesPage from './pages/categories/page';
 import Dashboard from './pages/dashboard/page';
 import LoginPage from './pages/login/page';
 import NotFound from './pages/not-found';
+import PublishersPage from './pages/publishers/page';
 import ReaderTypes from './pages/reader-types/page';
 import UserPage from './pages/users/page';
 
@@ -53,6 +54,10 @@ const routes = createBrowserRouter([
 					{
 						path: '/categories',
 						element: <CategoriesPage />,
+					},
+					{
+						path: '/publishers',
+						element: <PublishersPage />,
 					},
 				],
 			},
