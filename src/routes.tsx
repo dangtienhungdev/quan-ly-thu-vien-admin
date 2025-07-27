@@ -3,6 +3,7 @@ import { PrivateRoute, PublicRoute } from '@/components';
 
 import { AuthProvider } from '@/context/auth-context';
 import { AuthenticatedLayout } from './layout/authenticated-layout';
+import AuthorsPage from './pages/authors/page';
 import CategoriesPage from './pages/categories/page';
 import Dashboard from './pages/dashboard/page';
 import LoginPage from './pages/login/page';
@@ -58,6 +59,10 @@ const routes = createBrowserRouter([
 					{
 						path: '/publishers',
 						element: <PublishersPage />,
+					},
+					{
+						path: '/authors',
+						element: <AuthorsPage />,
 					},
 				],
 			},

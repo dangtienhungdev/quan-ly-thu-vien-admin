@@ -1,4 +1,5 @@
 export { useLogin } from './auth/use-login';
+export * from './authors';
 export * from './categories';
 export { useIsMobile } from './common/use-mobile';
 export * from './publishers';
