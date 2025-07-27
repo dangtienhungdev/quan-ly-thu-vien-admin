@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState } from 'react';
 
 import { AuthAPI } from '@/apis/auth';
 import { UsersAPI } from '@/apis/users';
-import { useLogin } from '@/hooks/use-login';
+import { useLogin } from '@/hooks';
 import { useNavigate } from 'react-router-dom';
 
 interface AuthContextType {

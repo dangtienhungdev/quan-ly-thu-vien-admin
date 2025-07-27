@@ -1,5 +1,11 @@
 import { IconLayoutDashboard, IconLockAccess } from '@tabler/icons-react';
-import { AudioWaveform, Command, GalleryVerticalEnd, User } from 'lucide-react';
+import {
+	AudioWaveform,
+	Command,
+	GalleryVerticalEnd,
+	User,
+	Users2,
+} from 'lucide-react';
 import { type SidebarData } from '../types';
 
 export const sidebarData: SidebarData = {
@@ -42,10 +48,20 @@ export const sidebarData: SidebarData = {
 			],
 		},
 		{
-			title: 'Người đùng hệ thống',
+			title: 'Hệ thống thư viện',
 			items: [
 				{
-					title: 'Người dùng',
+					title: 'Quản lý loại độc giả',
+					icon: Users2,
+					url: '/reader-types',
+				},
+			],
+		},
+		{
+			title: 'Hệ thống thư viện',
+			items: [
+				{
+					title: 'Quản lý',
 					icon: IconLockAccess,
 					items: [
 						{

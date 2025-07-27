@@ -18,3 +18,14 @@ export * from './publishers';
 
 // Export all types from readers
 export * from './readers';
+
+// Export all types from reader-types
+export type {
+	CreateReaderTypeRequest,
+	DefaultSettings,
+	PaginationReaderTypeQuery,
+	ReaderTypeConfig,
+	ReaderTypeName,
+	ReaderTypeStatistics,
+	UpdateReaderTypeRequest,
+} from './reader-types';
