@@ -1,57 +1,65 @@
 import type {
-	CategoriesResponse,
-	CategoryResponse,
-	CategorySearchQuery,
+	Category,
 	CreateCategoryRequest,
-	MainCategoriesResponse,
-	PaginationQuery,
-	SubcategoriesQuery,
-	SubcategoriesResponse,
+	PaginationCategoryQuery,
+	SearchCategoryQuery,
 	UpdateCategoryRequest,
-} from '../types';
+} from '../types/categories';
 
+import type { PaginatedResponse } from '../types';
 import instance from '../configs/instances';
 
 export const CategoriesAPI = {
 	// Get all categories with pagination
-	getAll: async (params?: PaginationQuery): Promise<CategoriesResponse> => {
-		const res = await instance.get('/categories', { params });
+	getAll: async (
+		params?: PaginationCategoryQuery
+	): Promise<PaginatedResponse<Category>> => {
+		const res = await instance.get('/api/categories', { params });
 		return res.data;
 	},
 
 	// Get main categories (no parent)
 	getMain: async (
-		params?: PaginationQuery
-	): Promise<MainCategoriesResponse> => {
-		const res = await instance.get('/categories/main', { params });
-		return res.data;
-	},
-
-	// Get category by ID
-	getById: async (id: string): Promise<CategoryResponse> => {
-		const res = await instance.get(`/categories/${id}`);
-		return res.data;
-	},
-
-	// Get category by slug
-	getBySlug: async (slug: string): Promise<CategoryResponse> => {
-		const res = await instance.get(`/categories/slug/${slug}`);
+		params?: PaginationCategoryQuery
+	): Promise<PaginatedResponse<Category>> => {
+		const res = await instance.get('/api/categories/main', { params });
 		return res.data;
 	},
 
 	// Get subcategories of a category
 	getSubcategories: async (
-		params: SubcategoriesQuery
-	): Promise<SubcategoriesResponse> => {
-		const res = await instance.get(`/categories/${params.id}/subcategories`, {
-			params: { page: params.page, limit: params.limit },
+		id: string,
+		params?: PaginationCategoryQuery
+	): Promise<PaginatedResponse<Category>> => {
+		const res = await instance.get(`/api/categories/${id}/subcategories`, {
+			params,
 		});
 		return res.data;
 	},
 
-	// Create a new category
-	create: async (data: CreateCategoryRequest): Promise<CategoryResponse> => {
-		const res = await instance.post('/categories', data);
+	// Search categories
+	search: async (
+		params: SearchCategoryQuery
+	): Promise<PaginatedResponse<Category>> => {
+		const res = await instance.get('/api/categories/search', { params });
+		return res.data;
+	},
+
+	// Get category by ID
+	getById: async (id: string): Promise<Category> => {
+		const res = await instance.get(`/api/categories/${id}`);
+		return res.data;
+	},
+
+	// Get category by slug
+	getBySlug: async (slug: string): Promise<Category> => {
+		const res = await instance.get(`/api/categories/slug/${slug}`);
+		return res.data;
+	},
+
+	// Create new category
+	create: async (data: CreateCategoryRequest): Promise<Category> => {
+		const res = await instance.post('/api/categories', data);
 		return res.data;
 	},
 
@@ -59,8 +67,8 @@ export const CategoriesAPI = {
 	update: async (
 		id: string,
 		data: UpdateCategoryRequest
-	): Promise<CategoryResponse> => {
-		const res = await instance.patch(`/categories/${id}`, data);
+	): Promise<Category> => {
+		const res = await instance.patch(`/api/categories/${id}`, data);
 		return res.data;
 	},
 
@@ -68,24 +76,18 @@ export const CategoriesAPI = {
 	updateBySlug: async (
 		slug: string,
 		data: UpdateCategoryRequest
-	): Promise<CategoryResponse> => {
-		const res = await instance.patch(`/categories/slug/${slug}`, data);
+	): Promise<Category> => {
+		const res = await instance.patch(`/api/categories/slug/${slug}`, data);
 		return res.data;
 	},
 
 	// Delete category by ID
 	delete: async (id: string): Promise<void> => {
-		await instance.delete(`/categories/${id}`);
+		await instance.delete(`/api/categories/${id}`);
 	},
 
 	// Delete category by slug
 	deleteBySlug: async (slug: string): Promise<void> => {
-		await instance.delete(`/categories/slug/${slug}`);
-	},
-
-	// Search categories
-	search: async (params: CategorySearchQuery): Promise<CategoriesResponse> => {
-		const res = await instance.get('/categories/search', { params });
-		return res.data;
+		await instance.delete(`/api/categories/slug/${slug}`);
 	},
 };

@@ -1,39 +1,37 @@
-import type { BaseEntity, PaginatedResponse } from './common';
+import type { PaginationQuery } from './common';
 
-export interface Category extends BaseEntity {
+export type PaginationCategoryQuery = PaginationQuery;
+
+export type Category = {
+	id: string;
 	category_name: string;
 	slug: string;
 	description?: string;
 	parent_id?: string;
-	parent?: Category;
-	children?: Category[];
-}
+	parent?: {
+		id: string;
+		category_name: string;
+	};
+	children?: Array<{
+		id: string;
+		category_name: string;
+	}>;
+	created_at: string;
+	updated_at: string;
+};
 
-export interface CreateCategoryRequest {
+export type CreateCategoryRequest = {
 	category_name: string;
 	description?: string;
 	parent_id?: string;
-}
+};
 
-export interface UpdateCategoryRequest {
+export type UpdateCategoryRequest = {
 	category_name?: string;
 	description?: string;
 	parent_id?: string;
-}
+};
 
-export interface CategorySearchQuery {
-	q: string;
-	page?: number;
-	limit?: number;
-}
-
-export interface SubcategoriesQuery {
-	id: string;
-	page?: number;
-	limit?: number;
-}
-
-export type CategoriesResponse = PaginatedResponse<Category>;
-export type CategoryResponse = Category;
-export type MainCategoriesResponse = PaginatedResponse<Category>;
-export type SubcategoriesResponse = PaginatedResponse<Category>;
+export type SearchCategoryQuery = PaginationQuery & {
+	q?: string;
+};

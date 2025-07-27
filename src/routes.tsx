@@ -3,6 +3,7 @@ import { PrivateRoute, PublicRoute } from '@/components';
 
 import { AuthProvider } from '@/context/auth-context';
 import { AuthenticatedLayout } from './layout/authenticated-layout';
+import CategoriesPage from './pages/categories/page';
 import Dashboard from './pages/dashboard/page';
 import LoginPage from './pages/login/page';
 import NotFound from './pages/not-found';
@@ -48,6 +49,10 @@ const routes = createBrowserRouter([
 					{
 						path: '/reader-types',
 						element: <ReaderTypes />,
+					},
+					{
+						path: '/categories',
+						element: <CategoriesPage />,
 					},
 				],
 			},

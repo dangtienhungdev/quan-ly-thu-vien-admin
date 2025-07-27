@@ -29,3 +29,6 @@ export type {
 	ReaderTypeStatistics,
 	UpdateReaderTypeRequest,
 } from './reader-types';
+
+// Export all types from categories
+export * from './categories';

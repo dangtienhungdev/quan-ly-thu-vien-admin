@@ -11,16 +11,22 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import type {
-	CreateReaderTypeRequest,
-	ReaderTypeConfig,
-	UpdateReaderTypeRequest,
-} from '@/types/reader-types';
-import { IconEdit, IconRefresh } from '@tabler/icons-react';
+	Category,
+	CreateCategoryRequest,
+	UpdateCategoryRequest,
+} from '@/types/categories';
+import {
+	IconEdit,
+	IconPlus,
+	IconRefresh,
+	IconTrash,
+} from '@tabler/icons-react';
 import {
 	Sheet,
 	SheetContent,
 	SheetHeader,
 	SheetTitle,
+	SheetTrigger,
 } from '@/components/ui/sheet';
 import {
 	Table,
@@ -30,70 +36,78 @@ import {
 	TableHeader,
 	TableRow,
 } from '@/components/ui/table';
+import {
+	useCategories,
+	useMainCategories,
+	useUpdateCategory,
+} from '@/hooks/categories';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useReaderTypes, useUpdateReaderType } from '@/hooks';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import EditReaderTypeForm from './components/edit-reader-type-form';
-import { ReaderTypesAPI } from '@/apis/reader-types';
+import { CategoriesAPI } from '@/apis/categories';
+import CreateCategoryForm from './components/create-category-form';
+import EditCategoryForm from './components/edit-category-form';
+import PaginationWrapper from '@/components/pagination-wrapper';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { useState } from 'react';
 
-const ReaderTypesPage = () => {
+const CategoriesPage = () => {
 	const [queryParams] = useSearchParams();
 	const navigate = useNavigate();
 	const page = queryParams.get('page');
 	const limit = queryParams.get('limit');
 
-	// State cho Sheet tạo reader type
+	// State cho Sheet tạo category
 	const [isCreateSheetOpen, setIsCreateSheetOpen] = useState(false);
 	const [isCreating, setIsCreating] = useState(false);
 
-	// State cho dialog xóa reader type
+	// State cho dialog xóa category
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 	const [isDeleting, setIsDeleting] = useState(false);
-	const [readerTypeToDelete, setReaderTypeToDelete] = useState<{
+	const [categoryToDelete, setCategoryToDelete] = useState<{
 		id: string;
-		typeName: string;
-		description: string;
+		category_name: string;
+		description?: string;
 	} | null>(null);
 
-	// State cho Sheet edit reader type
+	// State cho Sheet edit category
 	const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
-	const [readerTypeToEdit, setReaderTypeToEdit] =
-		useState<ReaderTypeConfig | null>(null);
+	const [categoryToEdit, setCategoryToEdit] = useState<Category | null>(null);
 
-	// Hook để cập nhật reader type
-	const { updateReaderType, isUpdating } = useUpdateReaderType({
+	// Hook để cập nhật category
+	const { updateCategory, isUpdating } = useUpdateCategory({
 		onSuccess: () => {
 			setIsEditSheetOpen(false);
-			setReaderTypeToEdit(null);
+			setCategoryToEdit(null);
 		},
 	});
 
-	const { readerTypes, meta, isLoading, isError, error, refetch } =
-		useReaderTypes({
+	const { categories, meta, isLoading, isError, error, refetch } =
+		useCategories({
 			params: {
 				page: page ? Number(page) : 1,
 				limit: limit ? Number(limit) : 10,
 			},
 		});
 
-	// Hàm xử lý tạo reader type
-	const handleCreateReaderType = async (data: CreateReaderTypeRequest) => {
+	// Hook để lấy danh sách main categories cho form
+	const { mainCategories } = useMainCategories();
+
+	// Hàm xử lý tạo category
+	const handleCreateCategory = async (data: CreateCategoryRequest) => {
 		try {
 			setIsCreating(true);
-			const newReaderType = await ReaderTypesAPI.create(data);
-			toast.success(`Tạo loại độc giả ${newReaderType.typeName} thành công!`);
+			const newCategory = await CategoriesAPI.create(data);
+			toast.success(`Tạo danh mục ${newCategory.category_name} thành công!`);
 			setIsCreateSheetOpen(false);
 			refetch();
 		} catch (error: unknown) {
 			const errorMessage =
 				error instanceof Error
 					? error.message
-					: 'Có lỗi xảy ra khi tạo loại độc giả';
+					: 'Có lỗi xảy ra khi tạo danh mục';
 			toast.error(errorMessage);
 		} finally {
 			setIsCreating(false);
@@ -105,34 +119,34 @@ const ReaderTypesPage = () => {
 		setIsCreateSheetOpen(false);
 	};
 
-	// Hàm mở dialog xóa reader type
-	const handleOpenDeleteDialog = (readerType: {
+	// Hàm mở dialog xóa category
+	const handleOpenDeleteDialog = (category: {
 		id: string;
-		typeName: string;
-		description: string;
+		category_name: string;
+		description?: string;
 	}) => {
-		setReaderTypeToDelete(readerType);
+		setCategoryToDelete(category);
 		setIsDeleteDialogOpen(true);
 	};
 
-	// Hàm xử lý xóa reader type
-	const handleDeleteReaderType = async () => {
-		if (!readerTypeToDelete) return;
+	// Hàm xử lý xóa category
+	const handleDeleteCategory = async () => {
+		if (!categoryToDelete) return;
 
 		try {
 			setIsDeleting(true);
-			await ReaderTypesAPI.delete(readerTypeToDelete.id);
+			await CategoriesAPI.delete(categoryToDelete.id);
 			toast.success(
-				`Xóa loại độc giả ${readerTypeToDelete.typeName} thành công!`
+				`Xóa danh mục ${categoryToDelete.category_name} thành công!`
 			);
 			setIsDeleteDialogOpen(false);
-			setReaderTypeToDelete(null);
+			setCategoryToDelete(null);
 			refetch();
 		} catch (error: unknown) {
 			const errorMessage =
 				error instanceof Error
 					? error.message
-					: 'Có lỗi xảy ra khi xóa loại độc giả';
+					: 'Có lỗi xảy ra khi xóa danh mục';
 			toast.error(errorMessage);
 		} finally {
 			setIsDeleting(false);
@@ -142,25 +156,25 @@ const ReaderTypesPage = () => {
 	// Hàm đóng dialog xóa
 	const handleCloseDeleteDialog = () => {
 		setIsDeleteDialogOpen(false);
-		setReaderTypeToDelete(null);
+		setCategoryToDelete(null);
 	};
 
-	// Hàm mở Sheet edit reader type
-	const handleOpenEditSheet = (readerType: ReaderTypeConfig) => {
-		setReaderTypeToEdit(readerType);
+	// Hàm mở Sheet edit category
+	const handleOpenEditSheet = (category: Category) => {
+		setCategoryToEdit(category);
 		setIsEditSheetOpen(true);
 	};
 
-	// Hàm xử lý cập nhật reader type
-	const handleUpdateReaderType = (data: UpdateReaderTypeRequest) => {
-		if (!readerTypeToEdit) return;
-		updateReaderType({ id: readerTypeToEdit.id, data });
+	// Hàm xử lý cập nhật category
+	const handleUpdateCategory = (data: UpdateCategoryRequest) => {
+		if (!categoryToEdit) return;
+		updateCategory({ id: categoryToEdit.id, data });
 	};
 
 	// Hàm đóng Sheet edit
 	const handleCloseEditSheet = () => {
 		setIsEditSheetOpen(false);
-		setReaderTypeToEdit(null);
+		setCategoryToEdit(null);
 	};
 
 	// Hàm xử lý thay đổi trang
@@ -170,37 +184,14 @@ const ReaderTypesPage = () => {
 		navigate(`?${newParams.toString()}`);
 	};
 
-	const getTypeNameLabel = (typeName: string) => {
-		switch (typeName) {
-			case 'student':
-				return 'Sinh viên';
-			case 'teacher':
-				return 'Giảng viên';
-			case 'staff':
-				return 'Nhân viên';
-			default:
-				return typeName;
-		}
+	const getCategoryTypeBadgeVariant = (
+		category: Category
+	): 'secondary' | 'default' => {
+		return category.parent_id ? 'secondary' : 'default';
 	};
 
-	const getTypeNameBadgeVariant = (typeName: string) => {
-		switch (typeName) {
-			case 'student':
-				return 'default';
-			case 'teacher':
-				return 'secondary';
-			case 'staff':
-				return 'outline';
-			default:
-				return 'secondary';
-		}
-	};
-
-	const formatCurrency = (amount: number) => {
-		return new Intl.NumberFormat('vi-VN', {
-			style: 'currency',
-			currency: 'VND',
-		}).format(amount);
+	const getCategoryTypeLabel = (category: Category): string => {
+		return category.parent_id ? 'Danh mục con' : 'Danh mục chính';
 	};
 
 	if (isLoading) {
@@ -229,7 +220,7 @@ const ReaderTypesPage = () => {
 			<div className="container mx-auto py-6">
 				<Alert variant="destructive">
 					<AlertDescription>
-						Failed to load reader types: {error?.message || 'Unknown error'}
+						Failed to load categories: {error?.message || 'Unknown error'}
 					</AlertDescription>
 				</Alert>
 				<Button onClick={() => refetch()} className="mt-4">
@@ -243,96 +234,95 @@ const ReaderTypesPage = () => {
 	return (
 		<>
 			<div className="mb-2 flex items-center justify-between space-y-2">
-				<h1 className="text-2xl font-bold tracking-tight">
-					Quản lý loại độc giả
-				</h1>
-				{/* <div className="flex items-center space-x-2">
+				<h1 className="text-2xl font-bold tracking-tight">Quản lý danh mục</h1>
+				<div className="flex items-center space-x-2">
 					<Sheet open={isCreateSheetOpen} onOpenChange={setIsCreateSheetOpen}>
 						<SheetTrigger asChild>
 							<Button>
 								<IconPlus className="mr-2 h-4 w-4" />
-								Thêm loại độc giả
+								Thêm danh mục
 							</Button>
 						</SheetTrigger>
 						<SheetContent side="right" className="w-[400px] sm:w-[540px]">
 							<SheetHeader>
-								<SheetTitle>Thêm loại độc giả mới</SheetTitle>
+								<SheetTitle>Thêm danh mục mới</SheetTitle>
 							</SheetHeader>
 							<div className="px-4">
-								<CreateReaderTypeForm
-									onSubmit={handleCreateReaderType}
+								<CreateCategoryForm
+									onSubmit={handleCreateCategory}
 									onCancel={handleCloseSheet}
 									isLoading={isCreating}
+									mainCategories={mainCategories}
 								/>
 							</div>
 						</SheetContent>
 					</Sheet>
-				</div> */}
+				</div>
 			</div>
 
 			<div>
 				<Table>
 					<TableHeader>
 						<TableRow>
-							<TableHead>Loại độc giả</TableHead>
-							<TableHead>Giới hạn mượn</TableHead>
-							<TableHead>Thời gian mượn</TableHead>
-							<TableHead>Tiền phạt/ngày</TableHead>
+							<TableHead>Tên danh mục</TableHead>
+							<TableHead>Slug</TableHead>
+							<TableHead>Loại</TableHead>
+							<TableHead>Danh mục cha</TableHead>
 							<TableHead>Mô tả</TableHead>
 							<TableHead className="text-right">Hành động</TableHead>
 						</TableRow>
 					</TableHeader>
 					<TableBody>
-						{readerTypes.length === 0 ? (
+						{categories.length === 0 ? (
 							<TableRow>
 								<TableCell colSpan={6} className="text-center py-8">
-									Không tìm thấy loại độc giả nào
+									Không tìm thấy danh mục nào
 								</TableCell>
 							</TableRow>
 						) : (
-							readerTypes.map((readerType) => (
-								<TableRow key={readerType.id}>
+							categories.map((category) => (
+								<TableRow key={category.id}>
 									<TableCell className="font-medium">
-										<Badge
-											variant={getTypeNameBadgeVariant(readerType.typeName)}
-										>
-											{getTypeNameLabel(readerType.typeName)}
+										{category.category_name}
+									</TableCell>
+									<TableCell className="font-mono text-sm">
+										{category.slug}
+									</TableCell>
+									<TableCell>
+										<Badge variant={getCategoryTypeBadgeVariant(category)}>
+											{getCategoryTypeLabel(category)}
 										</Badge>
 									</TableCell>
-									<TableCell>{readerType.maxBorrowLimit} cuốn</TableCell>
-									<TableCell>{readerType.borrowDurationDays} ngày</TableCell>
-									<TableCell>
-										{formatCurrency(readerType.lateReturnFinePerDay)}
-									</TableCell>
+									<TableCell>{category.parent?.category_name || '-'}</TableCell>
 									<TableCell className="max-w-xs truncate">
-										{readerType.description}
+										{category.description || '-'}
 									</TableCell>
 									<TableCell className="text-right">
 										<div className="flex justify-end space-x-1">
 											<Button
 												variant="ghost"
 												size="sm"
-												onClick={() => handleOpenEditSheet(readerType)}
+												onClick={() => handleOpenEditSheet(category)}
 												className="h-8 w-8 p-0 text-primary hover:text-primary"
 											>
 												<IconEdit className="h-4 w-4" />
-												<span className="sr-only">Chỉnh sửa loại độc giả</span>
+												<span className="sr-only">Chỉnh sửa danh mục</span>
 											</Button>
-											{/* <Button
+											<Button
 												variant="ghost"
 												size="sm"
 												onClick={() =>
 													handleOpenDeleteDialog({
-														id: readerType.id,
-														typeName: readerType.typeName,
-														description: readerType.description,
+														id: category.id,
+														category_name: category.category_name,
+														description: category.description,
 													})
 												}
 												className="h-8 w-8 p-0 text-destructive hover:text-destructive"
 											>
 												<IconTrash className="h-4 w-4" />
-												<span className="sr-only">Xóa loại độc giả</span>
-											</Button> */}
+												<span className="sr-only">Xóa danh mục</span>
+											</Button>
 										</div>
 									</TableCell>
 								</TableRow>
@@ -341,10 +331,10 @@ const ReaderTypesPage = () => {
 					</TableBody>
 				</Table>
 
-				{/* {meta && (
-					<div className="mt-4 space-y-4">
+				{meta && (
+					<div className="mt-4 space-y-4 flex items-center justify-between">
 						<div className="text-sm text-muted-foreground text-center">
-							Showing {readerTypes.length} of {meta.totalItems} reader types
+							Showing {categories.length} of {meta.totalItems} categories
 							{meta.totalPages > 1 && (
 								<span>
 									{' '}
@@ -353,33 +343,38 @@ const ReaderTypesPage = () => {
 							)}
 						</div>
 
-						{meta.totalPages > 1 && (
-							<PaginationWrapper
-								currentPage={meta.page}
-								totalPages={meta.totalPages}
-								onPageChange={handlePageChange}
-							/>
-						)}
+						<div>
+							{meta.totalPages > 1 && (
+								<PaginationWrapper
+									currentPage={meta.page}
+									totalPages={meta.totalPages}
+									onPageChange={handlePageChange}
+								/>
+							)}
+						</div>
 					</div>
-				)} */}
+				)}
 			</div>
 
-			{/* Dialog xác nhận xóa reader type */}
+			{/* Dialog xác nhận xóa category */}
 			<AlertDialog
 				open={isDeleteDialogOpen}
 				onOpenChange={setIsDeleteDialogOpen}
 			>
 				<AlertDialogContent>
 					<AlertDialogHeader>
-						<AlertDialogTitle>Xác nhận xóa loại độc giả</AlertDialogTitle>
+						<AlertDialogTitle>Xác nhận xóa danh mục</AlertDialogTitle>
 						<AlertDialogDescription>
-							Bạn có chắc chắn muốn xóa loại độc giả{' '}
-							<strong>
-								{getTypeNameLabel(readerTypeToDelete?.typeName || '')}
-							</strong>
-							?
+							Bạn có chắc chắn muốn xóa danh mục{' '}
+							<strong>{categoryToDelete?.category_name}</strong>?
 							<br />
 							Hành động này không thể hoàn tác.
+							{categoryToDelete?.description && (
+								<>
+									<br />
+									<strong>Mô tả:</strong> {categoryToDelete.description}
+								</>
+							)}
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>
@@ -387,7 +382,7 @@ const ReaderTypesPage = () => {
 							Hủy
 						</AlertDialogCancel>
 						<AlertDialogAction
-							onClick={handleDeleteReaderType}
+							onClick={handleDeleteCategory}
 							disabled={isDeleting}
 							className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
 						>
@@ -397,22 +392,22 @@ const ReaderTypesPage = () => {
 				</AlertDialogContent>
 			</AlertDialog>
 
-			{/* Sheet edit reader type */}
+			{/* Sheet edit category */}
 			<Sheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
 				<SheetContent side="right" className="w-[400px] sm:w-[540px]">
 					<SheetHeader>
 						<SheetTitle>
-							Chỉnh sửa loại độc giả{' '}
-							{readerTypeToEdit && getTypeNameLabel(readerTypeToEdit.typeName)}
+							Chỉnh sửa danh mục {categoryToEdit?.category_name}
 						</SheetTitle>
 					</SheetHeader>
 					<div className="px-4">
-						{readerTypeToEdit && (
-							<EditReaderTypeForm
-								readerType={readerTypeToEdit}
-								onSubmit={handleUpdateReaderType}
+						{categoryToEdit && (
+							<EditCategoryForm
+								category={categoryToEdit}
+								onSubmit={handleUpdateCategory}
 								onCancel={handleCloseEditSheet}
 								isLoading={isUpdating}
+								mainCategories={mainCategories}
 							/>
 						)}
 					</div>
@@ -422,4 +417,4 @@ const ReaderTypesPage = () => {
 	);
 };
 
-export default ReaderTypesPage;
+export default CategoriesPage;
