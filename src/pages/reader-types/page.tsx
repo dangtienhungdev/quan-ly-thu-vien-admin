@@ -10,12 +10,6 @@ import {
 	AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import type {
-	CreateReaderTypeRequest,
-	ReaderTypeConfig,
-	UpdateReaderTypeRequest,
-} from '@/types/reader-types';
-import { IconEdit, IconRefresh } from '@tabler/icons-react';
 import {
 	Sheet,
 	SheetContent,
@@ -30,16 +24,22 @@ import {
 	TableHeader,
 	TableRow,
 } from '@/components/ui/table';
-import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useReaderTypes, useUpdateReaderType } from '@/hooks';
+import type {
+	CreateReaderTypeRequest,
+	ReaderTypeConfig,
+	UpdateReaderTypeRequest,
+} from '@/types/reader-types';
+import { IconEdit, IconRefresh } from '@tabler/icons-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { ReaderTypesAPI } from '@/apis/reader-types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import EditReaderTypeForm from './components/edit-reader-type-form';
-import { ReaderTypesAPI } from '@/apis/reader-types';
 import { Skeleton } from '@/components/ui/skeleton';
-import { toast } from 'sonner';
 import { useState } from 'react';
+import { toast } from 'sonner';
+import EditReaderTypeForm from './components/edit-reader-type-form';
 
 const ReaderTypesPage = () => {
 	const [queryParams] = useSearchParams();
@@ -173,11 +173,11 @@ const ReaderTypesPage = () => {
 	const getTypeNameLabel = (typeName: string) => {
 		switch (typeName) {
 			case 'student':
-				return 'Sinh viên';
+				return 'Học sinh';
 			case 'teacher':
-				return 'Giảng viên';
+				return 'Giáo viên';
 			case 'staff':
-				return 'Nhân viên';
+				return 'Cán bộ';
 			default:
 				return typeName;
 		}
