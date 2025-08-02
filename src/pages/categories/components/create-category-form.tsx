@@ -1,26 +1,26 @@
-import type { Category, CreateCategoryRequest } from '@/types/categories';
 import {
-	Form,
-	FormControl,
-	FormField,
-	FormItem,
-	FormLabel,
-	FormMessage,
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
 } from '@/components/ui/form';
 import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from '@/components/ui/select';
+import type { Category, CreateCategoryRequest } from '@/types/categories';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
 
 const createCategorySchema = z.object({
 	category_name: z
@@ -51,14 +51,14 @@ const CreateCategoryForm = ({
 		defaultValues: {
 			category_name: '',
 			description: '',
-			parent_id: '',
+			parent_id: 'none',
 		},
 	});
 
 	const handleSubmit = (data: CreateCategoryFormData) => {
 		onSubmit({
 			...data,
-			parent_id: data.parent_id || undefined,
+			parent_id: data.parent_id === 'none' ? undefined : data.parent_id,
 		});
 	};
 
@@ -92,7 +92,7 @@ const CreateCategoryForm = ({
 									</SelectTrigger>
 								</FormControl>
 								<SelectContent>
-									<SelectItem value="">Không có (danh mục chính)</SelectItem>
+									<SelectItem value="none">Không có (danh mục chính)</SelectItem>
 									{mainCategories.map((category) => (
 										<SelectItem key={category.id} value={category.id}>
 											{category.category_name}

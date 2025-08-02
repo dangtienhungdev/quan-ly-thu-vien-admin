@@ -1,26 +1,26 @@
-import type { Category, UpdateCategoryRequest } from '@/types/categories';
 import {
-	Form,
-	FormControl,
-	FormField,
-	FormItem,
-	FormLabel,
-	FormMessage,
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
 } from '@/components/ui/form';
 import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from '@/components/ui/select';
+import type { Category, UpdateCategoryRequest } from '@/types/categories';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
 
 const updateCategorySchema = z.object({
 	category_name: z
@@ -53,14 +53,14 @@ const EditCategoryForm = ({
 		defaultValues: {
 			category_name: category.category_name,
 			description: category.description || '',
-			parent_id: category.parent_id || '',
+			parent_id: category.parent_id || 'none',
 		},
 	});
 
 	const handleSubmit = (data: UpdateCategoryFormData) => {
 		onSubmit({
 			...data,
-			parent_id: data.parent_id || undefined,
+			parent_id: data.parent_id === 'none' ? undefined : data.parent_id,
 		});
 	};
 
@@ -94,7 +94,7 @@ const EditCategoryForm = ({
 									</SelectTrigger>
 								</FormControl>
 								<SelectContent>
-									<SelectItem value="">Không có (danh mục chính)</SelectItem>
+									<SelectItem value="none">Không có (danh mục chính)</SelectItem>
 									{mainCategories
 										.filter((cat) => cat.id !== category.id) // Không cho phép chọn chính nó làm parent
 										.map((cat) => (

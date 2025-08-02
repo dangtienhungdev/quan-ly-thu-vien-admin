@@ -37,6 +37,7 @@ export interface CreateBookRequest {
 	physical_type: PhysicalType;
 	publisher_id: string;
 	category_id: string;
+	author_ids?: string[];
 }
 
 export interface UpdateBookRequest {
@@ -52,6 +53,7 @@ export interface UpdateBookRequest {
 	physical_type?: PhysicalType;
 	publisher_id?: string;
 	category_id?: string;
+	author_ids?: string[];
 }
 
 export interface BookSearchQuery {
@@ -72,7 +74,7 @@ export type BulkCreateBookResponse = Book[];
 // These are simplified versions for book relationships
 export interface BookPublisher {
 	id: string;
-	publisher_name: string;
+	publisherName: string;
 	slug: string;
 }
 

@@ -1,57 +1,59 @@
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
-	AlertDialog,
-	AlertDialogAction,
-	AlertDialogCancel,
-	AlertDialogContent,
-	AlertDialogDescription,
-	AlertDialogFooter,
-	AlertDialogHeader,
-	AlertDialogTitle,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import type {
-	Category,
-	CreateCategoryRequest,
-	UpdateCategoryRequest,
-} from '@/types/categories';
 import {
-	IconEdit,
-	IconPlus,
-	IconRefresh,
-	IconTrash,
-} from '@tabler/icons-react';
-import {
-	Sheet,
-	SheetContent,
-	SheetHeader,
-	SheetTitle,
-	SheetTrigger,
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
 } from '@/components/ui/sheet';
 import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from '@/components/ui/table';
 import {
-	useCategories,
-	useMainCategories,
-	useUpdateCategory,
+  useCategories,
+  useMainCategories,
+  useUpdateCategory,
 } from '@/hooks/categories';
+import type {
+  Category,
+  CreateCategoryRequest,
+  UpdateCategoryRequest,
+} from '@/types/categories';
+import {
+  IconChevronDown,
+  IconChevronRight,
+  IconEdit,
+  IconPlus,
+  IconRefresh,
+  IconTrash,
+} from '@tabler/icons-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { CategoriesAPI } from '@/apis/categories';
+import PaginationWrapper from '@/components/pagination-wrapper';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CategoriesAPI } from '@/apis/categories';
+import { Skeleton } from '@/components/ui/skeleton';
+import React, { useState } from 'react';
+import { toast } from 'sonner';
 import CreateCategoryForm from './components/create-category-form';
 import EditCategoryForm from './components/edit-category-form';
-import PaginationWrapper from '@/components/pagination-wrapper';
-import { Skeleton } from '@/components/ui/skeleton';
-import { toast } from 'sonner';
-import { useState } from 'react';
 
 const CategoriesPage = () => {
 	const [queryParams] = useSearchParams();
@@ -75,6 +77,9 @@ const CategoriesPage = () => {
 	// State cho Sheet edit category
 	const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
 	const [categoryToEdit, setCategoryToEdit] = useState<Category | null>(null);
+
+	// State cho expandable table
+	const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
 	// Hook để cập nhật category
 	const { updateCategory, isUpdating } = useUpdateCategory({
@@ -184,6 +189,32 @@ const CategoriesPage = () => {
 		navigate(`?${newParams.toString()}`);
 	};
 
+	// Hàm xử lý expand/collapse row
+	const toggleRowExpansion = (categoryId: string) => {
+		const newExpandedRows = new Set(expandedRows);
+		if (newExpandedRows.has(categoryId)) {
+			newExpandedRows.delete(categoryId);
+		} else {
+			newExpandedRows.add(categoryId);
+		}
+		setExpandedRows(newExpandedRows);
+	};
+
+	// Hàm kiểm tra xem category có con không
+	const hasChildren = (category: Category): boolean => {
+		return categories.some(cat => cat.parent_id === category.id);
+	};
+
+	// Hàm lấy danh sách con của một category
+	const getChildren = (categoryId: string): Category[] => {
+		return categories.filter(cat => cat.parent_id === categoryId);
+	};
+
+	// Hàm lấy danh sách categories cha (không có parent_id)
+	const getParentCategories = (): Category[] => {
+		return categories.filter(cat => !cat.parent_id);
+	};
+
 	const getCategoryTypeBadgeVariant = (
 		category: Category
 	): 'secondary' | 'default' => {
@@ -192,6 +223,99 @@ const CategoriesPage = () => {
 
 	const getCategoryTypeLabel = (category: Category): string => {
 		return category.parent_id ? 'Danh mục con' : 'Danh mục chính';
+	};
+
+	// Component render row cho category
+	const renderCategoryRow = (category: Category, level: number = 0): React.ReactElement => {
+		const isExpanded = expandedRows.has(category.id);
+		const children = getChildren(category.id);
+		const hasChildCategories = children.length > 0;
+
+		return (
+			<>
+				<TableRow key={category.id} className={level > 0 ? 'bg-muted/30' : ''}>
+					<TableCell className="font-medium">
+						<div className="flex items-center space-x-2">
+							{level > 0 && (
+								<div className="flex space-x-1">
+									{Array.from({ length: level }).map((_, index) => (
+										<div
+											key={index}
+											className="w-4 h-px bg-border"
+										/>
+									))}
+								</div>
+							)}
+							{hasChildCategories && (
+								<Button
+									variant="ghost"
+									size="sm"
+									onClick={() => toggleRowExpansion(category.id)}
+									className="h-6 w-6 p-0"
+								>
+									{isExpanded ? (
+										<IconChevronDown className="h-4 w-4" />
+									) : (
+										<IconChevronRight className="h-4 w-4" />
+									)}
+								</Button>
+							)}
+							{!hasChildCategories && level > 0 && (
+								<div className="w-6" />
+							)}
+							<span className={level > 0 ? 'text-sm' : ''}>
+								{category.category_name}
+							</span>
+						</div>
+					</TableCell>
+					<TableCell className="font-mono text-sm">
+						{category.slug}
+					</TableCell>
+					<TableCell>
+						<Badge variant={getCategoryTypeBadgeVariant(category)}>
+							{getCategoryTypeLabel(category)}
+						</Badge>
+					</TableCell>
+					<TableCell>{category.parent?.category_name || '-'}</TableCell>
+					<TableCell className="max-w-xs truncate">
+						{category.description || '-'}
+					</TableCell>
+					<TableCell className="text-right">
+						<div className="flex justify-end space-x-1">
+							<Button
+								variant="ghost"
+								size="sm"
+								onClick={() => handleOpenEditSheet(category)}
+								className="h-8 w-8 p-0 text-primary hover:text-primary"
+							>
+								<IconEdit className="h-4 w-4" />
+								<span className="sr-only">Chỉnh sửa danh mục</span>
+							</Button>
+							<Button
+								variant="ghost"
+								size="sm"
+								onClick={() =>
+									handleOpenDeleteDialog({
+										id: category.id,
+										category_name: category.category_name,
+										description: category.description,
+									})
+								}
+								className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+							>
+								<IconTrash className="h-4 w-4" />
+								<span className="sr-only">Xóa danh mục</span>
+							</Button>
+						</div>
+					</TableCell>
+				</TableRow>
+				{isExpanded && hasChildCategories && (
+					<>
+						{children.map(child => renderCategoryRow(child, level + 1))}
+					</>
+				)}
+			</>
+		);
 	};
 
 	if (isLoading) {
@@ -230,6 +354,8 @@ const CategoriesPage = () => {
 			</div>
 		);
 	}
+
+	const parentCategories = getParentCategories();
 
 	return (
 		<>
@@ -273,60 +399,14 @@ const CategoriesPage = () => {
 						</TableRow>
 					</TableHeader>
 					<TableBody>
-						{categories.length === 0 ? (
+						{parentCategories.length === 0 ? (
 							<TableRow>
 								<TableCell colSpan={6} className="text-center py-8">
 									Không tìm thấy danh mục nào
 								</TableCell>
 							</TableRow>
 						) : (
-							categories.map((category) => (
-								<TableRow key={category.id}>
-									<TableCell className="font-medium">
-										{category.category_name}
-									</TableCell>
-									<TableCell className="font-mono text-sm">
-										{category.slug}
-									</TableCell>
-									<TableCell>
-										<Badge variant={getCategoryTypeBadgeVariant(category)}>
-											{getCategoryTypeLabel(category)}
-										</Badge>
-									</TableCell>
-									<TableCell>{category.parent?.category_name || '-'}</TableCell>
-									<TableCell className="max-w-xs truncate">
-										{category.description || '-'}
-									</TableCell>
-									<TableCell className="text-right">
-										<div className="flex justify-end space-x-1">
-											<Button
-												variant="ghost"
-												size="sm"
-												onClick={() => handleOpenEditSheet(category)}
-												className="h-8 w-8 p-0 text-primary hover:text-primary"
-											>
-												<IconEdit className="h-4 w-4" />
-												<span className="sr-only">Chỉnh sửa danh mục</span>
-											</Button>
-											<Button
-												variant="ghost"
-												size="sm"
-												onClick={() =>
-													handleOpenDeleteDialog({
-														id: category.id,
-														category_name: category.category_name,
-														description: category.description,
-													})
-												}
-												className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-											>
-												<IconTrash className="h-4 w-4" />
-												<span className="sr-only">Xóa danh mục</span>
-											</Button>
-										</div>
-									</TableCell>
-								</TableRow>
-							))
+							parentCategories.map((category) => renderCategoryRow(category))
 						)}
 					</TableBody>
 				</Table>

@@ -31,4 +31,22 @@ export type {
 } from './reader-types';
 
 // Export all types from user
-export * from './user.type';
+export type {
+	CreateUserRequest,
+	PaginationUserQuery,
+	UpdateUserRequest,
+	UserRole,
+	User as UserType,
+} from './user.type';
+
+// Export all types from ebooks
+export * from './ebooks';
+
+// Export all types from physical-copies
+export * from './physical-copies';
+
+// Export all types from borrow-records
+export * from './borrow-records';
+
+// Export all types from reservations
+export * from './reservations';

@@ -14,31 +14,31 @@ import instance from '../configs/instances';
 export const BooksAPI = {
 	// Get all books with pagination
 	getAll: async (params?: PaginationQuery): Promise<BooksResponse> => {
-		const res = await instance.get('/books', { params });
+		const res = await instance.get('/api/books', { params });
 		return res.data;
 	},
 
 	// Get book by ID
 	getById: async (id: string): Promise<BookResponse> => {
-		const res = await instance.get(`/books/${id}`);
+		const res = await instance.get(`/api/books/${id}`);
 		return res.data;
 	},
 
 	// Get book by slug
 	getBySlug: async (slug: string): Promise<BookResponse> => {
-		const res = await instance.get(`/books/slug/${slug}`);
+		const res = await instance.get(`/api/books/slug/${slug}`);
 		return res.data;
 	},
 
 	// Get book by ISBN
 	getByIsbn: async (params: BookByIsbnQuery): Promise<BookResponse> => {
-		const res = await instance.get(`/books/isbn/${params.isbn}`);
+		const res = await instance.get(`/api/books/isbn/${params.isbn}`);
 		return res.data;
 	},
 
 	// Create a new book
 	create: async (data: CreateBookRequest): Promise<BookResponse> => {
-		const res = await instance.post('/books', data);
+		const res = await instance.post('/api/books', data);
 		return res.data;
 	},
 
@@ -46,7 +46,7 @@ export const BooksAPI = {
 	createBulk: async (
 		data: CreateBookRequest[]
 	): Promise<BulkCreateBookResponse> => {
-		const res = await instance.post('/books/bulk', data);
+		const res = await instance.post('/api/books/bulk', data);
 		return res.data;
 	},
 
@@ -55,7 +55,7 @@ export const BooksAPI = {
 		id: string,
 		data: UpdateBookRequest
 	): Promise<BookResponse> => {
-		const res = await instance.patch(`/books/${id}`, data);
+		const res = await instance.patch(`/api/books/${id}`, data);
 		return res.data;
 	},
 
@@ -64,23 +64,23 @@ export const BooksAPI = {
 		slug: string,
 		data: UpdateBookRequest
 	): Promise<BookResponse> => {
-		const res = await instance.patch(`/books/slug/${slug}`, data);
+		const res = await instance.patch(`/api/books/slug/${slug}`, data);
 		return res.data;
 	},
 
 	// Delete book by ID
 	delete: async (id: string): Promise<void> => {
-		await instance.delete(`/books/${id}`);
+		await instance.delete(`/api/books/${id}`);
 	},
 
 	// Delete book by slug
 	deleteBySlug: async (slug: string): Promise<void> => {
-		await instance.delete(`/books/slug/${slug}`);
+		await instance.delete(`/api/books/slug/${slug}`);
 	},
 
 	// Search books
 	search: async (params: BookSearchQuery): Promise<BooksResponse> => {
-		const res = await instance.get('/books/search', { params });
+		const res = await instance.get('/api/books/search', { params });
 		return res.data;
 	},
 };

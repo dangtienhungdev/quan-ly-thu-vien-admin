@@ -59,6 +59,7 @@ export type PhysicalType = 'library_use' | 'borrowable';
 export interface PaginationQuery {
 	page?: number;
 	limit?: number;
+	type?: 'physical' | 'ebook';
 }
 
 export interface SearchQuery extends PaginationQuery {

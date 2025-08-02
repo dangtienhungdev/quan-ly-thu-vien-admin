@@ -4,7 +4,10 @@ import {
 	BookOpen,
 	BookOpenCheck,
 	Building2,
+	Calendar,
 	Command,
+	Copy,
+	FileText,
 	GalleryVerticalEnd,
 	Library,
 	PenTool,
@@ -86,31 +89,37 @@ export const sidebarData: SidebarData = {
 			],
 		},
 		{
-			title: 'Các loại sách',
+			title: 'Quản lý sách',
 			items: [
 				{
-					title: 'Quản lý loại sách',
+					title: 'Thông tin sách',
 					icon: BookOpen,
-					items: [
-						{
-							title: 'Sách vật lý',
-							url: '/physical-books',
-						},
-						{
-							title: 'Sách điện tử',
-							url: '/e-books',
-						},
-					],
+					url: '/books',
+				},
+				{
+					title: 'Bản sao vật lý',
+					icon: Copy,
+					url: '/physical-copies',
+				},
+				{
+					title: 'Sách điện tử',
+					icon: FileText,
+					url: '/ebooks',
 				},
 			],
 		},
 		{
-			title: 'Mượn trả',
+			title: 'Giao dịch thư viện',
 			items: [
 				{
-					title: 'Quản lý mượn sách',
+					title: 'Mượn trả sách',
 					icon: BookOpenCheck,
-					url: '/borrow-returns',
+					url: '/borrow-records',
+				},
+				{
+					title: 'Đặt trước sách',
+					icon: Calendar,
+					url: '/reservations',
 				},
 				{
 					title: 'Quản lý gia hạn',
