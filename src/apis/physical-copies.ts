@@ -118,12 +118,12 @@ export const PhysicalCopiesAPI = {
 
 	// Get physical copies by book
 	getByBook: async (
-		params: PhysicalCopyBookQuery
+		bookId: string,
+		params?: PhysicalCopyBookQuery
 	): Promise<PhysicalCopiesResponse> => {
-		const res = await instance.get(
-			`/api/physical-copies/book/${params.bookId}`,
-			{ params }
-		);
+		const res = await instance.get(`/api/physical-copies/book/${bookId}`, {
+			params,
+		});
 		return res.data;
 	},
 
