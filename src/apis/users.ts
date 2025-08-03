@@ -60,4 +60,10 @@ export const UsersAPI = {
 		const res = await instance.patch(`/api/users/${id}`, data);
 		return res.data;
 	},
+
+	// get me
+	getMe: async (): Promise<User> => {
+		const res = await instance.get('/api/users/me');
+		return res.data;
+	},
 };

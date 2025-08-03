@@ -10,7 +10,6 @@ export { finesApi } from './fines';
 export { PhysicalCopiesAPI } from './physical-copies';
 export { PublishersAPI } from './publishers';
 export { ReadersAPI } from './readers';
-export { renewalsApi } from './renewals';
 export { ReservationsAPI } from './reservations';
 export { UploadsAPI } from './uploads';
 export { UsersAPI } from './users';

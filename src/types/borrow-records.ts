@@ -10,11 +10,70 @@ export interface BorrowRecord extends BaseEntity {
 	return_date?: string;
 	status: BorrowStatus;
 	librarian_id: string;
-	reader?: BorrowRecordReaderInfo;
-	copy?: CopyInfo;
-	librarian?: LibrarianInfo;
-	renewals?: RenewalInfo[];
-	fines?: FineInfo[];
+	borrow_notes?: string;
+	return_notes?: string;
+	renewal_count: number;
+	reader?: {
+		id: string;
+		user: any;
+		readerType: any;
+		fullName: string;
+		dob: string;
+		gender: string;
+		address: string;
+		phone: string;
+		cardNumber: string;
+		cardIssueDate: string;
+		cardExpiryDate: string;
+		isActive: boolean;
+		createdAt: string;
+		updatedAt: string;
+	};
+	physicalCopy?: {
+		id: string;
+		book_id: string;
+		book: {
+			id: string;
+			title: string;
+			slug: string;
+			isbn: string;
+			publish_year: number;
+			edition: string;
+			description: string;
+			cover_image?: string;
+			language: string;
+			page_count: number;
+			book_type: string;
+			physical_type: string;
+			publisher_id: string;
+			category_id: string;
+			created_at: string;
+			updated_at: string;
+		};
+		barcode: string;
+		status: string;
+		current_condition: string;
+		condition_details: string;
+		purchase_date: string;
+		purchase_price: string;
+		location: string;
+		notes: string;
+		last_checkup_date: string;
+		is_archived: boolean;
+		created_at: string;
+		updated_at: string;
+	};
+	librarian?: {
+		id: string;
+		userCode: string;
+		username: string;
+		email: string;
+		role: string;
+		accountStatus: string;
+		lastLogin: string;
+		createdAt: string;
+		updatedAt: string;
+	};
 }
 
 export interface BorrowRecordReaderInfo {
@@ -69,7 +128,12 @@ export interface CreateBorrowRecordRequest {
 	copy_id: string;
 	borrow_date?: string;
 	due_date?: string;
+	return_date?: string;
+	status?: BorrowStatus;
 	librarian_id: string;
+	borrow_notes?: string;
+	return_notes?: string;
+	renewal_count?: number;
 }
 
 export interface UpdateBorrowRecordRequest {
@@ -81,14 +145,11 @@ export interface UpdateBorrowRecordRequest {
 }
 
 export interface ReturnBookRequest {
-	return_date?: string;
-	librarian_id: string;
-	condition_notes?: string;
+	returnNotes?: string;
 }
 
 export interface RenewBookRequest {
-	librarian_id: string;
-	renewal_notes?: string;
+	newDueDate: string;
 }
 
 export interface BorrowRecordSearchQuery {
@@ -129,12 +190,6 @@ export interface BorrowRecordDateRangeQuery {
 }
 
 export interface BorrowRecordOverdueQuery {
-	page?: number;
-	limit?: number;
-}
-
-export interface BorrowRecordDueSoonQuery {
-	days: number;
 	page?: number;
 	limit?: number;
 }

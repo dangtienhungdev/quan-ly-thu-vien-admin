@@ -1,163 +1,113 @@
-import { apiClient } from '@/lib/api-client';
 import type {
+	ApproveRenewalRequest,
 	CreateRenewalRequest,
-	PaginatedResponse,
-	PaginationRenewalQuery,
-	Renewal,
-	RenewalStatistics,
-	RenewalValidationResult,
-	RenewalWithBorrowDetails,
+	RejectRenewalRequest,
+	RenewalBorrowQuery,
+	RenewalLibrarianQuery,
+	RenewalResponse,
+	RenewalSearchQuery,
+	RenewalStatsResponse,
+	RenewalStatusQuery,
+	RenewalsResponse,
 	UpdateRenewalRequest,
-} from '@/types';
+} from '@/types/renewals';
 
-const BASE_URL = '/renewals';
+import instance from '../configs/instances';
 
-export const renewalsApi = {
-	// Tạo gia hạn mới
-	create: async (data: CreateRenewalRequest): Promise<Renewal> => {
-		const response = await apiClient.post(BASE_URL, data);
-		return response.data;
+export const RenewalsAPI = {
+	// Create a new renewal
+	create: async (data: CreateRenewalRequest): Promise<RenewalResponse> => {
+		const res = await instance.post('/api/renewals', data);
+		return res.data;
 	},
 
-	// Lấy danh sách gia hạn có phân trang
-	getAll: async (
-		params?: PaginationRenewalQuery
-	): Promise<PaginatedResponse<RenewalWithBorrowDetails>> => {
-		const response = await apiClient.get(BASE_URL, { params });
-		return response.data;
+	// Get all renewals with pagination
+	getAll: async (params?: {
+		page?: number;
+		limit?: number;
+	}): Promise<RenewalsResponse> => {
+		const res = await instance.get('/api/renewals', { params });
+		return res.data;
 	},
 
-	// Tìm kiếm gia hạn
-	search: async (
-		query: string,
-		params?: PaginationRenewalQuery
-	): Promise<PaginatedResponse<RenewalWithBorrowDetails>> => {
-		const response = await apiClient.get(`${BASE_URL}/search`, {
-			params: { q: query, ...params },
-		});
-		return response.data;
+	// Search renewals
+	search: async (params: RenewalSearchQuery): Promise<RenewalsResponse> => {
+		const res = await instance.get('/api/renewals/search', { params });
+		return res.data;
 	},
 
-	// Lọc theo độc giả
-	getByReader: async (
-		readerId: string,
-		params?: PaginationRenewalQuery
-	): Promise<PaginatedResponse<RenewalWithBorrowDetails>> => {
-		const response = await apiClient.get(`${BASE_URL}/reader/${readerId}`, {
+	// Get renewals by status
+	getByStatus: async (
+		params: RenewalStatusQuery
+	): Promise<RenewalsResponse> => {
+		const res = await instance.get(`/api/renewals/status/${params.status}`, {
 			params,
 		});
-		return response.data;
+		return res.data;
 	},
 
-	// Lọc theo sách
-	getByBook: async (
-		bookId: string,
-		params?: PaginationRenewalQuery
-	): Promise<PaginatedResponse<RenewalWithBorrowDetails>> => {
-		const response = await apiClient.get(`${BASE_URL}/book/${bookId}`, {
+	// Get renewals by borrow record
+	getByBorrow: async (
+		params: RenewalBorrowQuery
+	): Promise<RenewalsResponse> => {
+		const res = await instance.get(`/api/renewals/borrow/${params.borrowId}`, {
 			params,
 		});
-		return response.data;
+		return res.data;
 	},
 
-	// Lọc theo thủ thư
+	// Get renewals by librarian
 	getByLibrarian: async (
-		librarianId: string,
-		params?: PaginationRenewalQuery
-	): Promise<PaginatedResponse<RenewalWithBorrowDetails>> => {
-		const response = await apiClient.get(
-			`${BASE_URL}/librarian/${librarianId}`,
+		params: RenewalLibrarianQuery
+	): Promise<RenewalsResponse> => {
+		const res = await instance.get(
+			`/api/renewals/librarian/${params.librarianId}`,
 			{ params }
 		);
-		return response.data;
+		return res.data;
 	},
 
-	// Lọc theo khoảng thời gian
-	getByDateRange: async (
-		startDate: string,
-		endDate: string,
-		params?: PaginationRenewalQuery
-	): Promise<PaginatedResponse<RenewalWithBorrowDetails>> => {
-		const response = await apiClient.get(`${BASE_URL}/date-range`, {
-			params: { start_date: startDate, end_date: endDate, ...params },
-		});
-		return response.data;
+	// Get renewals statistics
+	getStats: async (): Promise<RenewalStatsResponse> => {
+		const res = await instance.get('/api/renewals/stats');
+		return res.data;
 	},
 
-	// Gia hạn gần đây
-	getRecent: async (
-		limit: number = 10
-	): Promise<RenewalWithBorrowDetails[]> => {
-		const response = await apiClient.get(`${BASE_URL}/recent`, {
-			params: { limit },
-		});
-		return response.data;
+	// Get renewal by ID
+	getById: async (id: string): Promise<RenewalResponse> => {
+		const res = await instance.get(`/api/renewals/${id}`);
+		return res.data;
 	},
 
-	// Thống kê gia hạn
-	getStatistics: async (): Promise<RenewalStatistics> => {
-		const response = await apiClient.get(`${BASE_URL}/stats`);
-		return response.data;
+	// Update renewal
+	update: async (
+		id: string,
+		data: UpdateRenewalRequest
+	): Promise<RenewalResponse> => {
+		const res = await instance.patch(`/api/renewals/${id}`, data);
+		return res.data;
 	},
 
-	// Lấy chi tiết gia hạn
-	getById: async (id: string): Promise<RenewalWithBorrowDetails> => {
-		const response = await apiClient.get(`${BASE_URL}/${id}`);
-		return response.data;
+	// Approve renewal
+	approve: async (
+		id: string,
+		data: ApproveRenewalRequest
+	): Promise<RenewalResponse> => {
+		const res = await instance.patch(`/api/renewals/${id}/approve`, data);
+		return res.data;
 	},
 
-	// Cập nhật gia hạn
-	update: async (id: string, data: UpdateRenewalRequest): Promise<Renewal> => {
-		const response = await apiClient.patch(`${BASE_URL}/${id}`, data);
-		return response.data;
+	// Reject renewal
+	reject: async (
+		id: string,
+		data: RejectRenewalRequest
+	): Promise<RenewalResponse> => {
+		const res = await instance.patch(`/api/renewals/${id}/reject`, data);
+		return res.data;
 	},
 
-	// Xóa gia hạn
+	// Delete renewal
 	delete: async (id: string): Promise<void> => {
-		await apiClient.delete(`${BASE_URL}/${id}`);
-	},
-
-	// Xóa nhiều gia hạn
-	deleteBatch: async (ids: string[]): Promise<void> => {
-		await apiClient.delete(`${BASE_URL}/batch`, { data: { ids } });
-	},
-
-	// Kiểm tra có thể gia hạn không
-	validateRenewal: async (
-		borrowId: string
-	): Promise<RenewalValidationResult> => {
-		const response = await apiClient.get(`${BASE_URL}/validate/${borrowId}`);
-		return response.data;
-	},
-
-	// Gia hạn tự động (tính toán ngày hết hạn mới)
-	autoRenew: async (borrowId: string): Promise<Renewal> => {
-		const response = await apiClient.post(`${BASE_URL}/auto-renew/${borrowId}`);
-		return response.data;
-	},
-
-	// Xuất báo cáo gia hạn
-	exportReport: async (params?: PaginationRenewalQuery): Promise<Blob> => {
-		const response = await apiClient.get(`${BASE_URL}/export`, {
-			params,
-			responseType: 'blob',
-		});
-		return response.data;
-	},
-
-	// Lấy lịch sử gia hạn của một lần mượn
-	getByBorrowRecord: async (
-		borrowId: string
-	): Promise<RenewalWithBorrowDetails[]> => {
-		const response = await apiClient.get(`${BASE_URL}/borrow/${borrowId}`);
-		return response.data;
-	},
-
-	// Gia hạn nhiều sách cùng lúc
-	bulkRenew: async (borrowIds: string[]): Promise<Renewal[]> => {
-		const response = await apiClient.post(`${BASE_URL}/bulk`, {
-			borrow_ids: borrowIds,
-		});
-		return response.data;
+		await instance.delete(`/api/renewals/${id}`);
 	},
 };

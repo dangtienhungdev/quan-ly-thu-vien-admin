@@ -19,6 +19,7 @@ import PhysicalCopiesPage from './pages/physical-copies/page';
 import PublishersPage from './pages/publishers/page';
 import ReaderTypes from './pages/reader-types/page';
 import ReadersPage from './pages/readers/page';
+import RenewalsPage from './pages/renewals/page';
 import ReservationsPage from './pages/reservations/page';
 import UserPage from './pages/users/page';
 
@@ -93,6 +94,10 @@ const routes = createBrowserRouter([
 					{
 						path: '/reservations',
 						element: <ReservationsPage />,
+					},
+					{
+						path: '/renewals',
+						element: <RenewalsPage />,
 					},
 					{
 						path: '/fines',

@@ -39,8 +39,10 @@ export interface ReservationBookInfo {
 export interface CreateReservationRequest {
 	reader_id: string;
 	book_id: string;
-	reservation_date?: string;
-	expiry_date?: string;
+	reservation_date: string;
+	expiry_date: string;
+	reader_notes?: string;
+	priority?: number;
 }
 
 export interface UpdateReservationRequest {

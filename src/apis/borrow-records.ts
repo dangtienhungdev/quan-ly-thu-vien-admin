@@ -1,7 +1,6 @@
 import type {
 	BorrowRecordCopyQuery,
 	BorrowRecordDateRangeQuery,
-	BorrowRecordDueSoonQuery,
 	BorrowRecordLibrarianQuery,
 	BorrowRecordOverdueQuery,
 	BorrowRecordReaderQuery,
@@ -106,17 +105,6 @@ export const BorrowRecordsAPI = {
 		return res.data;
 	},
 
-	// Get borrow records due soon
-	getDueSoon: async (
-		params: BorrowRecordDueSoonQuery
-	): Promise<BorrowRecordsResponse> => {
-		const res = await instance.get(
-			`/api/borrow-records/due-soon/${params.days}`,
-			{ params }
-		);
-		return res.data;
-	},
-
 	// Get borrow records statistics
 	getStats: async (): Promise<BorrowRecordStatsResponse> => {
 		const res = await instance.get('/api/borrow-records/stats');
@@ -143,7 +131,7 @@ export const BorrowRecordsAPI = {
 		id: string,
 		data: ReturnBookRequest
 	): Promise<BorrowRecordResponse> => {
-		const res = await instance.post(`/api/borrow-records/${id}/return`, data);
+		const res = await instance.patch(`/api/borrow-records/${id}/return`, data);
 		return res.data;
 	},
 
@@ -152,7 +140,7 @@ export const BorrowRecordsAPI = {
 		id: string,
 		data: RenewBookRequest
 	): Promise<BorrowRecordResponse> => {
-		const res = await instance.post(`/api/borrow-records/${id}/renew`, data);
+		const res = await instance.patch(`/api/borrow-records/${id}/renew`, data);
 		return res.data;
 	},
 

@@ -1,4 +1,3 @@
-import { ReservationsAPI } from '@/apis';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,8 +16,16 @@ import {
 	SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import type { ReservationStatus } from '@/types';
-import { useQuery } from '@tanstack/react-query';
+import {
+	useCancelReservation,
+	useCreateReservation,
+	useDeleteReservation,
+	useFulfillReservation,
+	useReservationStats,
+	useReservations,
+	useReservationsExpiringSoon,
+} from '@/hooks/reservations';
+import type { Reservation, ReservationStatus } from '@/types/reservations';
 import {
 	BookOpen,
 	Calendar,
@@ -26,38 +33,46 @@ import {
 	Clock,
 	Plus,
 	Search,
+	Trash2,
 	XCircle,
 } from 'lucide-react';
 import { useState } from 'react';
+import { CreateReservationDialog } from './components/create-reservation-dialog';
 
 export default function ReservationsPage() {
 	const [searchQuery, setSearchQuery] = useState('');
 	const [selectedStatus, setSelectedStatus] = useState<string>('all');
 	const [activeTab, setActiveTab] = useState('all');
+	const [showCreateDialog, setShowCreateDialog] = useState(false);
 
 	// Fetch reservations data
-	const { data: reservationsData, isLoading: isLoadingReservations } = useQuery(
-		{
-			queryKey: [
-				'reservations',
-				{ search: searchQuery, status: selectedStatus },
-			],
-			queryFn: () => ReservationsAPI.getAll({ page: 1, limit: 20 }),
-		}
-	);
+	const {
+		reservations,
+		isLoading: isLoadingReservations,
+		meta,
+	} = useReservations({
+		page: 1,
+		limit: 20,
+		searchQuery: searchQuery || undefined,
+	});
 
 	// Fetch expiring soon reservations
-	const { data: expiringSoonReservations } = useQuery({
-		queryKey: ['reservations-expiring-soon'],
-		queryFn: () =>
-			ReservationsAPI.getExpiringSoon({ days: 3, page: 1, limit: 10 }),
-	});
+	const { reservations: expiringSoonReservations } =
+		useReservationsExpiringSoon({
+			days: 3,
+			page: 1,
+			limit: 10,
+			enabled: activeTab === 'expiring',
+		});
 
 	// Fetch statistics
-	const { data: stats } = useQuery({
-		queryKey: ['reservations-stats'],
-		queryFn: () => ReservationsAPI.getStats(),
-	});
+	const { stats } = useReservationStats();
+
+	// Mutations
+	const createReservationMutation = useCreateReservation();
+	const fulfillReservationMutation = useFulfillReservation();
+	const cancelReservationMutation = useCancelReservation();
+	const deleteReservationMutation = useDeleteReservation();
 
 	const handleSearch = (value: string) => {
 		setSearchQuery(value);
@@ -65,6 +80,28 @@ export default function ReservationsPage() {
 
 	const handleStatusFilter = (status: string) => {
 		setSelectedStatus(status);
+	};
+
+	const handleCreateReservation = (data: any) => {
+		createReservationMutation.mutate(data, {
+			onSuccess: () => {
+				setShowCreateDialog(false);
+			},
+		});
+	};
+
+	const handleFulfillReservation = (reservationId: string) => {
+		fulfillReservationMutation.mutate(reservationId);
+	};
+
+	const handleCancelReservation = (reservationId: string) => {
+		cancelReservationMutation.mutate(reservationId);
+	};
+
+	const handleDeleteReservation = (reservationId: string) => {
+		if (confirm('Bạn có chắc chắn muốn xóa đặt trước này?')) {
+			deleteReservationMutation.mutate(reservationId);
+		}
 	};
 
 	const getStatusColor = (status: ReservationStatus) => {
@@ -93,6 +130,7 @@ export default function ReservationsPage() {
 	};
 
 	const formatDate = (dateString: string) => {
+		if (!dateString) return '-';
 		return new Date(dateString).toLocaleDateString('vi-VN');
 	};
 
@@ -109,7 +147,7 @@ export default function ReservationsPage() {
 	};
 
 	return (
-		<div className="container mx-auto p-6 space-y-6">
+		<div className="space-y-6">
 			{/* Header */}
 			<div className="flex justify-between items-center">
 				<div>
@@ -118,7 +156,7 @@ export default function ReservationsPage() {
 						Theo dõi và quản lý các yêu cầu đặt trước sách trong thư viện
 					</p>
 				</div>
-				<Button>
+				<Button onClick={() => setShowCreateDialog(true)}>
 					<Plus className="mr-2 h-4 w-4" />
 					Tạo Đặt Trước
 				</Button>
@@ -214,9 +252,13 @@ export default function ReservationsPage() {
 				<TabsContent value="all" className="space-y-4">
 					{isLoadingReservations ? (
 						<div className="text-center py-8">Đang tải...</div>
+					) : reservations.length === 0 ? (
+						<div className="text-center py-8 text-muted-foreground">
+							Không có đặt trước nào
+						</div>
 					) : (
 						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-							{reservationsData?.data.map((reservation) => (
+							{reservations.map((reservation: Reservation) => (
 								<Card
 									key={reservation.id}
 									className="hover:shadow-lg transition-shadow"
@@ -225,15 +267,22 @@ export default function ReservationsPage() {
 										<div className="flex justify-between items-start">
 											<div className="flex-1">
 												<CardTitle className="text-lg">
-													{reservation.book?.title}
+													{reservation.book?.title || 'Không có tên sách'}
 												</CardTitle>
 												<CardDescription>
-													Độc giả: {reservation.reader?.full_name}
+													Độc giả:{' '}
+													{reservation.reader?.full_name ||
+														'Không có tên độc giả'}
 												</CardDescription>
 											</div>
 											<Badge className={getStatusColor(reservation.status)}>
 												{getStatusIcon(reservation.status)}
-												<span className="ml-1">{reservation.status}</span>
+												<span className="ml-1">
+													{reservation.status === 'pending' && 'Đang chờ'}
+													{reservation.status === 'fulfilled' && 'Đã thực hiện'}
+													{reservation.status === 'cancelled' && 'Đã hủy'}
+													{reservation.status === 'expired' && 'Hết hạn'}
+												</span>
 											</Badge>
 										</div>
 									</CardHeader>
@@ -271,17 +320,36 @@ export default function ReservationsPage() {
 										</div>
 										<div className="flex gap-2 mt-4">
 											{reservation.status === 'pending' && (
-												<Button size="sm" className="flex-1">
+												<Button
+													size="sm"
+													className="flex-1"
+													onClick={() =>
+														handleFulfillReservation(reservation.id)
+													}
+													disabled={fulfillReservationMutation.isPending}
+												>
 													Thực hiện
 												</Button>
 											)}
 											{reservation.status === 'pending' && (
-												<Button variant="outline" size="sm">
+												<Button
+													variant="outline"
+													size="sm"
+													onClick={() =>
+														handleCancelReservation(reservation.id)
+													}
+													disabled={cancelReservationMutation.isPending}
+												>
 													Hủy
 												</Button>
 											)}
-											<Button variant="outline" size="sm">
-												Chi tiết
+											<Button
+												variant="outline"
+												size="sm"
+												onClick={() => handleDeleteReservation(reservation.id)}
+												disabled={deleteReservationMutation.isPending}
+											>
+												<Trash2 className="h-4 w-4" />
 											</Button>
 										</div>
 									</CardContent>
@@ -292,59 +360,85 @@ export default function ReservationsPage() {
 				</TabsContent>
 
 				<TabsContent value="expiring" className="space-y-4">
-					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-						{expiringSoonReservations?.data.map((reservation) => (
-							<Card
-								key={reservation.id}
-								className="hover:shadow-lg transition-shadow border-yellow-200"
-							>
-								<CardHeader>
-									<div className="flex justify-between items-start">
-										<div className="flex-1">
-											<CardTitle className="text-lg">
-												{reservation.book?.title}
-											</CardTitle>
-											<CardDescription>
-												Độc giả: {reservation.reader?.full_name}
-											</CardDescription>
+					{expiringSoonReservations.length === 0 ? (
+						<div className="text-center py-8 text-muted-foreground">
+							Không có đặt trước nào sắp hết hạn
+						</div>
+					) : (
+						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+							{expiringSoonReservations.map((reservation: Reservation) => (
+								<Card
+									key={reservation.id}
+									className="hover:shadow-lg transition-shadow border-yellow-200"
+								>
+									<CardHeader>
+										<div className="flex justify-between items-start">
+											<div className="flex-1">
+												<CardTitle className="text-lg">
+													{reservation.book?.title || 'Không có tên sách'}
+												</CardTitle>
+												<CardDescription>
+													Độc giả:{' '}
+													{reservation.reader?.full_name ||
+														'Không có tên độc giả'}
+												</CardDescription>
+											</div>
+											<Badge className="bg-yellow-100 text-yellow-800">
+												<Clock className="mr-1 h-3 w-3" />
+												Sắp hết hạn
+											</Badge>
 										</div>
-										<Badge className="bg-yellow-100 text-yellow-800">
-											<Clock className="mr-1 h-3 w-3" />
-											Sắp hết hạn
-										</Badge>
-									</div>
-								</CardHeader>
-								<CardContent>
-									<div className="space-y-2">
-										<div className="flex justify-between text-sm">
-											<span>Ngày đặt:</span>
-											<span>{formatDate(reservation.reservation_date)}</span>
+									</CardHeader>
+									<CardContent>
+										<div className="space-y-2">
+											<div className="flex justify-between text-sm">
+												<span>Ngày đặt:</span>
+												<span>{formatDate(reservation.reservation_date)}</span>
+											</div>
+											<div className="flex justify-between text-sm">
+												<span>Hạn hết:</span>
+												<span className="text-yellow-600 font-semibold">
+													{formatDate(reservation.expiry_date)}
+												</span>
+											</div>
+											<div className="text-sm text-yellow-600 bg-yellow-50 p-2 rounded">
+												Còn {calculateDaysUntilExpiry(reservation.expiry_date)}{' '}
+												ngày đến hạn
+											</div>
 										</div>
-										<div className="flex justify-between text-sm">
-											<span>Hạn hết:</span>
-											<span className="text-yellow-600 font-semibold">
-												{formatDate(reservation.expiry_date)}
-											</span>
+										<div className="flex gap-2 mt-4">
+											<Button
+												size="sm"
+												className="flex-1"
+												onClick={() => handleFulfillReservation(reservation.id)}
+												disabled={fulfillReservationMutation.isPending}
+											>
+												Thực hiện
+											</Button>
+											<Button
+												variant="outline"
+												size="sm"
+												onClick={() => handleCancelReservation(reservation.id)}
+												disabled={cancelReservationMutation.isPending}
+											>
+												Hủy
+											</Button>
 										</div>
-										<div className="text-sm text-yellow-600 bg-yellow-50 p-2 rounded">
-											Còn {calculateDaysUntilExpiry(reservation.expiry_date)}{' '}
-											ngày đến hạn
-										</div>
-									</div>
-									<div className="flex gap-2 mt-4">
-										<Button size="sm" className="flex-1">
-											Thực hiện
-										</Button>
-										<Button variant="outline" size="sm">
-											Gửi nhắc nhở
-										</Button>
-									</div>
-								</CardContent>
-							</Card>
-						))}
-					</div>
+									</CardContent>
+								</Card>
+							))}
+						</div>
+					)}
 				</TabsContent>
 			</Tabs>
+
+			{/* Create Reservation Dialog */}
+			<CreateReservationDialog
+				open={showCreateDialog}
+				onOpenChange={setShowCreateDialog}
+				onSubmit={handleCreateReservation}
+				isLoading={createReservationMutation.isPending}
+			/>
 		</div>
 	);
 }
