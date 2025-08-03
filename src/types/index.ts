@@ -50,3 +50,15 @@ export * from './borrow-records';
 
 // Export all types from reservations
 export * from './reservations';
+
+// Export all types from fines
+export * from './fines';
+
+// Export all types from renewals
+export * from './renewals';
+
+// Export all types from dashboard
+export * from './dashboard';
+
+// Export all types from uploads
+export * from './uploads';

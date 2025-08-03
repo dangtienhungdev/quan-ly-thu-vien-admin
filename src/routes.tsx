@@ -4,11 +4,14 @@ import { Outlet, createBrowserRouter } from 'react-router-dom';
 import { AuthProvider } from '@/context/auth-context';
 import { AuthenticatedLayout } from './layout/authenticated-layout';
 import AuthorsPage from './pages/authors/page';
+import EBookDetailPage from './pages/books/ebook/[id]/page';
 import BooksPage from './pages/books/page';
+import PhysicalBookDetailPage from './pages/books/physical/[id]/page';
 import BorrowRecordsPage from './pages/borrow-records/page';
 import CategoriesPage from './pages/categories/page';
 import Dashboard from './pages/dashboard/page';
 import EBooksPage from './pages/ebooks/page';
+import FinesPage from './pages/fines';
 import LoginPage from './pages/login/page';
 import NotFound from './pages/not-found';
 import PhysicalBooksPage from './pages/physical-books/page';
@@ -92,12 +95,24 @@ const routes = createBrowserRouter([
 						element: <ReservationsPage />,
 					},
 					{
+						path: '/fines',
+						element: <FinesPage />,
+					},
+					{
 						path: '/readers',
 						element: <ReadersPage />,
 					},
 					{
 						path: '/books',
 						element: <BooksPage />,
+					},
+					{
+						path: '/books/ebook/:id',
+						element: <EBookDetailPage />,
+					},
+					{
+						path: '/books/physical/:id',
+						element: <PhysicalBookDetailPage />,
 					},
 				],
 			},

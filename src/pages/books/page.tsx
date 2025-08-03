@@ -250,6 +250,15 @@ const BooksPage = () => {
 		navigate('?page=1');
 	};
 
+	// Hàm xử lý navigate đến trang chi tiết sách
+	const handleNavigateToBookDetail = (book: Book) => {
+		if (book.book_type === 'ebook') {
+			navigate(`/books/ebook/${book.id}`);
+		} else {
+			navigate(`/books/physical/${book.id}`);
+		}
+	};
+
 	// Lấy dữ liệu hiện tại
 	const currentBooks = searchQuery ? searchResults : books;
 	const currentMeta = searchQuery ? searchMeta : meta;
@@ -453,7 +462,12 @@ const BooksPage = () => {
 									</TableCell>
 									<TableCell className="font-medium">
 										<div className="flex flex-col">
-											<span className="font-semibold">{book.title}</span>
+											<button
+												onClick={() => handleNavigateToBookDetail(book)}
+												className="text-left font-semibold hover:text-blue-600 hover:underline transition-colors cursor-pointer"
+											>
+												{book.title}
+											</button>
 											{book.description && (
 												<span className="text-sm text-muted-foreground line-clamp-2">
 													{book.description}
@@ -506,12 +520,7 @@ const BooksPage = () => {
 											<Button
 												variant="ghost"
 												size="sm"
-												onClick={() => {
-													// TODO: Navigate to book detail page
-													toast.info(
-														'Tính năng xem chi tiết sách sẽ được phát triển'
-													);
-												}}
+												onClick={() => handleNavigateToBookDetail(book)}
 												className="h-8 w-8 p-0 text-blue-600 hover:text-blue-600"
 											>
 												<IconEye className="h-4 w-4" />

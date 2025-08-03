@@ -111,8 +111,11 @@ export const EBooksAPI = {
 	},
 
 	// Get ebooks by book
-	getByBook: async (params: EBookBookQuery): Promise<EBooksResponse> => {
-		const res = await instance.get(`/api/ebooks/book/${params.bookId}`, {
+	getByBook: async (
+		bookId: string,
+		params?: EBookBookQuery
+	): Promise<EBooksResponse> => {
+		const res = await instance.get(`/api/ebooks/book/${bookId}`, {
 			params,
 		});
 		return res.data;
