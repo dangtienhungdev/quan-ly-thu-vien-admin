@@ -1,0 +1,49 @@
+
+
+services:
+  # Frontend Application
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    ports:
+      - "80:80"
+    environment:
+      - NODE_ENV=production
+      - NEXT_TELEMETRY_DISABLED=1
+      # Add your environment variables here
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  # Development version (uncomment to use)
+  # frontend-dev:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #     target: builder
+  #   ports:
+  #     - "5174:5174"
+  #   environment:
+  #     - NODE_ENV=development
+  #     - NEXT_TELEMETRY_DISABLED=1
+  #     - NEXT_PUBLIC_API_URL=http://localhost:8000/api
+  #   volumes:
+  #     - .:/app
+  #     - /app/node_modules
+  #     - /app/.next
+  #   command: npm run dev
+  #   restart: unless-stopped
+  #   networks:
+  #     - app-network
+
+
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  node_modules:
+  next_cache:

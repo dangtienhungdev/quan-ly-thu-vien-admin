@@ -1,0 +1,51 @@
+
+
+services:
+  # Development Frontend
+  frontend-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "5174:5174"
+    environment:
+      - NODE_ENV=development
+      - NEXT_TELEMETRY_DISABLED=1
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: npm run dev -- --host 0.0.0.0
+    restart: unless-stopped
+    networks:
+      - app-network
+    stdin_open: true
+    tty: true
+
+  # Development with hot reload
+  frontend-hot:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3001:5174"
+    environment:
+      - NODE_ENV=development
+      - NEXT_TELEMETRY_DISABLED=1
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: npm run dev -- --host 0.0.0.0
+    restart: unless-stopped
+    networks:
+      - app-network
+    stdin_open: true
+    tty: true
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  node_modules:
