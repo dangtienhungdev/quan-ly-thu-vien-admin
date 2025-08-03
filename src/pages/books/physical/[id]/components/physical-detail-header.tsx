@@ -6,7 +6,7 @@ interface PhysicalDetailHeaderProps {
 	title?: string;
 }
 
-export function PhysicalDetailHeader({ title }: PhysicalDetailHeaderProps) {
+export function PhysicalDetailHeader({}: PhysicalDetailHeaderProps) {
 	const navigate = useNavigate();
 
 	return (

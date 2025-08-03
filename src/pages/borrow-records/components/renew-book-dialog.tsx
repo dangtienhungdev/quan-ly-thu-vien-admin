@@ -14,7 +14,6 @@ import React, { useState } from 'react';
 interface RenewBookDialogProps {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
-	recordId: string;
 	bookTitle?: string;
 	readerName?: string;
 	currentDueDate?: string;
@@ -25,7 +24,6 @@ interface RenewBookDialogProps {
 export function RenewBookDialog({
 	open,
 	onOpenChange,
-	recordId,
 	bookTitle,
 	readerName,
 	currentDueDate,

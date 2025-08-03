@@ -96,11 +96,11 @@ const CreateBookForm = ({
 			// Clear any validation errors for cover_image
 			form.clearErrors('cover_image');
 		},
-		onError: (error) => {
+		onError: () => {
 			// Set validation error for cover_image
 			form.setError('cover_image', {
 				type: 'manual',
-				message: 'Upload ảnh thất bại. Vui lòng thử lại.',
+				message: 'Có lỗi xảy ra khi tải ảnh lên',
 			});
 		},
 	});

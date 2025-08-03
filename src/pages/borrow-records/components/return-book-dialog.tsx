@@ -14,7 +14,6 @@ import React, { useState } from 'react';
 interface ReturnBookDialogProps {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
-	recordId: string;
 	bookTitle?: string;
 	readerName?: string;
 	onSubmit: (data: ReturnBookRequest) => void;
@@ -24,7 +23,6 @@ interface ReturnBookDialogProps {
 export function ReturnBookDialog({
 	open,
 	onOpenChange,
-	recordId,
 	bookTitle,
 	readerName,
 	onSubmit,

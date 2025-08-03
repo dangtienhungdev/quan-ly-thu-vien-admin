@@ -46,11 +46,7 @@ export default function ReservationsPage() {
 	const [showCreateDialog, setShowCreateDialog] = useState(false);
 
 	// Fetch reservations data
-	const {
-		reservations,
-		isLoading: isLoadingReservations,
-		meta,
-	} = useReservations({
+	const { reservations, isLoading: isLoadingReservations } = useReservations({
 		page: 1,
 		limit: 20,
 		searchQuery: searchQuery || undefined,

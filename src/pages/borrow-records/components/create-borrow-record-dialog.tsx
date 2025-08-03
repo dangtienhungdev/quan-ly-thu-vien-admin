@@ -58,11 +58,7 @@ export function CreateBorrowRecordDialog({
 	});
 
 	// get me
-	const {
-		data: profile,
-		isLoading: profileLoading,
-		error: profileError,
-	} = useGetProfile();
+	const { data: profile } = useGetProfile();
 
 	const validateForm = (): boolean => {
 		const newErrors: Record<string, string> = {};
@@ -106,7 +102,7 @@ export function CreateBorrowRecordDialog({
 			reader_id: formData.reader_id,
 			copy_id: formData.copy_id,
 			status: formData.status,
-			librarian_id: profile?.id,
+			librarian_id: profile?.id || '',
 			renewal_count: Number(formData.renewal_count),
 		};
 

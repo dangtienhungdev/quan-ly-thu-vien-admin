@@ -1,7 +1,3 @@
-import type {
-	CreateReaderTypeRequest,
-	ReaderTypeName,
-} from '@/types/reader-types';
 import {
 	Form,
 	FormControl,
@@ -17,13 +13,14 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
+import type { CreateReaderTypeRequest } from '@/types/reader-types';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
 
 const createReaderTypeSchema = z.object({
 	typeName: z.enum(['student', 'teacher', 'staff'] as const),
@@ -68,19 +65,6 @@ const CreateReaderTypeForm = ({
 
 	const handleSubmit = (data: CreateReaderTypeFormData) => {
 		onSubmit(data);
-	};
-
-	const getTypeNameLabel = (typeName: ReaderTypeName) => {
-		switch (typeName) {
-			case 'student':
-				return 'Sinh viên';
-			case 'teacher':
-				return 'Giảng viên';
-			case 'staff':
-				return 'Nhân viên';
-			default:
-				return typeName;
-		}
 	};
 
 	return (

@@ -11,7 +11,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useReaders } from '@/hooks/readers';
-import { useGetProfile } from '@/hooks/users/use-get-profile';
 import type { CreateReservationRequest } from '@/types';
 import React, { useState } from 'react';
 import { SearchableSelect } from '../../borrow-records/components/searchable-select';
@@ -47,7 +46,7 @@ export function CreateReservationDialog({
 	});
 
 	// Get current user profile (not used in this component but kept for future use)
-	const { data: profile } = useGetProfile();
+	// const { data: profile } = useGetProfile();
 
 	const validateForm = (): boolean => {
 		const newErrors: Record<string, string> = {};

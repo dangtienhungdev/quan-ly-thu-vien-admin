@@ -51,6 +51,9 @@ export interface ApiError {
 	error: string;
 }
 
+// User type - re-export from user.type.ts
+export type { User } from './user.type';
+
 // Book types
 export type BookType = 'physical' | 'ebook';
 export type PhysicalType = 'library_use' | 'borrowable';

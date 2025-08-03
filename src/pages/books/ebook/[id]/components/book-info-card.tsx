@@ -28,7 +28,7 @@ export function BookInfoCard({ book }: BookInfoCardProps) {
 							<span className="text-muted-foreground">Tác giả:</span>
 							<span>
 								{book?.authors
-									?.map((author) => author.author_name)
+									?.map((author: any) => author.author_name)
 									.join(', ') || 'Chưa có'}
 							</span>
 						</div>

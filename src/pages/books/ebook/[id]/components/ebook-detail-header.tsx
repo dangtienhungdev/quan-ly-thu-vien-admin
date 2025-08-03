@@ -6,7 +6,7 @@ interface EBookDetailHeaderProps {
 	title?: string;
 }
 
-export function EBookDetailHeader({ title }: EBookDetailHeaderProps) {
+export function EBookDetailHeader({}: EBookDetailHeaderProps) {
 	const navigate = useNavigate();
 
 	return (

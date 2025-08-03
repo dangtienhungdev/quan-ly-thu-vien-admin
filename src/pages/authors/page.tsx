@@ -9,18 +9,7 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import type {
-	Author,
-	CreateAuthorRequest,
-	UpdateAuthorRequest,
-} from '@/types/authors';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import {
-	IconEdit,
-	IconPlus,
-	IconRefresh,
-	IconTrash,
-} from '@tabler/icons-react';
 import {
 	Sheet,
 	SheetContent,
@@ -37,17 +26,28 @@ import {
 	TableRow,
 } from '@/components/ui/table';
 import { useAuthors, useUpdateAuthor } from '@/hooks/authors';
+import type {
+	Author,
+	CreateAuthorRequest,
+	UpdateAuthorRequest,
+} from '@/types/authors';
+import {
+	IconEdit,
+	IconPlus,
+	IconRefresh,
+	IconTrash,
+} from '@tabler/icons-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { AuthorsAPI } from '@/apis/authors';
+import PaginationWrapper from '@/components/pagination-wrapper';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useState } from 'react';
+import { toast } from 'sonner';
 import CreateAuthorForm from './components/create-author-form';
 import EditAuthorForm from './components/edit-author-form';
-import PaginationWrapper from '@/components/pagination-wrapper';
-import { Skeleton } from '@/components/ui/skeleton';
-import { toast } from 'sonner';
-import { useState } from 'react';
 
 const AuthorsPage = () => {
 	const [queryParams] = useSearchParams();
@@ -172,10 +172,6 @@ const AuthorsPage = () => {
 		const newParams = new URLSearchParams(queryParams);
 		newParams.set('page', newPage.toString());
 		navigate(`?${newParams.toString()}`);
-	};
-
-	const formatDate = (dateString: string): string => {
-		return new Date(dateString).toLocaleDateString('vi-VN');
 	};
 
 	if (isLoading) {

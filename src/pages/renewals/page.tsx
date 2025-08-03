@@ -44,11 +44,7 @@ export default function RenewalsPage() {
 	const [activeTab, setActiveTab] = useState('all');
 
 	// Fetch renewals data
-	const {
-		renewals,
-		isLoading: isLoadingRenewals,
-		meta,
-	} = useRenewals({
+	const { renewals, isLoading: isLoadingRenewals } = useRenewals({
 		page: 1,
 		limit: 20,
 		searchQuery: searchQuery || undefined,

@@ -1,47 +1,47 @@
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
+	Sheet,
+	SheetContent,
+	SheetHeader,
+	SheetTitle,
+	SheetTrigger,
 } from '@/components/ui/sheet';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
 } from '@/components/ui/table';
 import {
-  useCategories,
-  useMainCategories,
-  useUpdateCategory,
+	useCategories,
+	useMainCategories,
+	useUpdateCategory,
 } from '@/hooks/categories';
 import type {
-  Category,
-  CreateCategoryRequest,
-  UpdateCategoryRequest,
+	Category,
+	CreateCategoryRequest,
+	UpdateCategoryRequest,
 } from '@/types/categories';
 import {
-  IconChevronDown,
-  IconChevronRight,
-  IconEdit,
-  IconPlus,
-  IconRefresh,
-  IconTrash,
+	IconChevronDown,
+	IconChevronRight,
+	IconEdit,
+	IconPlus,
+	IconRefresh,
+	IconTrash,
 } from '@tabler/icons-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -200,19 +200,14 @@ const CategoriesPage = () => {
 		setExpandedRows(newExpandedRows);
 	};
 
-	// Hàm kiểm tra xem category có con không
-	const hasChildren = (category: Category): boolean => {
-		return categories.some(cat => cat.parent_id === category.id);
-	};
-
 	// Hàm lấy danh sách con của một category
 	const getChildren = (categoryId: string): Category[] => {
-		return categories.filter(cat => cat.parent_id === categoryId);
+		return categories.filter((cat) => cat.parent_id === categoryId);
 	};
 
 	// Hàm lấy danh sách categories cha (không có parent_id)
 	const getParentCategories = (): Category[] => {
-		return categories.filter(cat => !cat.parent_id);
+		return categories.filter((cat) => !cat.parent_id);
 	};
 
 	const getCategoryTypeBadgeVariant = (
@@ -226,7 +221,10 @@ const CategoriesPage = () => {
 	};
 
 	// Component render row cho category
-	const renderCategoryRow = (category: Category, level: number = 0): React.ReactElement => {
+	const renderCategoryRow = (
+		category: Category,
+		level: number = 0
+	): React.ReactElement => {
 		const isExpanded = expandedRows.has(category.id);
 		const children = getChildren(category.id);
 		const hasChildCategories = children.length > 0;
@@ -239,10 +237,7 @@ const CategoriesPage = () => {
 							{level > 0 && (
 								<div className="flex space-x-1">
 									{Array.from({ length: level }).map((_, index) => (
-										<div
-											key={index}
-											className="w-4 h-px bg-border"
-										/>
+										<div key={index} className="w-4 h-px bg-border" />
 									))}
 								</div>
 							)}
@@ -260,17 +255,13 @@ const CategoriesPage = () => {
 									)}
 								</Button>
 							)}
-							{!hasChildCategories && level > 0 && (
-								<div className="w-6" />
-							)}
+							{!hasChildCategories && level > 0 && <div className="w-6" />}
 							<span className={level > 0 ? 'text-sm' : ''}>
 								{category.category_name}
 							</span>
 						</div>
 					</TableCell>
-					<TableCell className="font-mono text-sm">
-						{category.slug}
-					</TableCell>
+					<TableCell className="font-mono text-sm">{category.slug}</TableCell>
 					<TableCell>
 						<Badge variant={getCategoryTypeBadgeVariant(category)}>
 							{getCategoryTypeLabel(category)}
@@ -310,9 +301,7 @@ const CategoriesPage = () => {
 					</TableCell>
 				</TableRow>
 				{isExpanded && hasChildCategories && (
-					<>
-						{children.map(child => renderCategoryRow(child, level + 1))}
-					</>
+					<>{children.map((child) => renderCategoryRow(child, level + 1))}</>
 				)}
 			</>
 		);

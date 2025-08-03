@@ -118,7 +118,6 @@ const BooksPage = () => {
 		isLoading: isSearching,
 		isError: isSearchError,
 		error: searchError,
-		refetch: refetchSearch,
 	} = useSearchBooks({
 		params: {
 			q: searchQuery || '',

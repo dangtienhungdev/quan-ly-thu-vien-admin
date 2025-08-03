@@ -10,17 +10,6 @@ import {
 	AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import type {
-	CreateUserRequest,
-	UpdateUserRequest,
-	UserRole,
-} from '@/types/user.type';
-import {
-	IconEdit,
-	IconPlus,
-	IconRefresh,
-	IconTrash,
-} from '@tabler/icons-react';
 import {
 	Sheet,
 	SheetContent,
@@ -37,22 +26,33 @@ import {
 	TableRow,
 } from '@/components/ui/table';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useUpdateUser, useUsers } from '@/hooks';
+import type {
+	CreateUserRequest,
+	UpdateUserRequest,
+	UserRole,
+} from '@/types/user.type';
+import {
+	IconEdit,
+	IconPlus,
+	IconRefresh,
+	IconTrash,
+} from '@tabler/icons-react';
 import {
 	createSearchParams,
 	useNavigate,
 	useSearchParams,
 } from 'react-router-dom';
-import { useUpdateUser, useUsers } from '@/hooks';
 
+import { UsersAPI } from '@/apis/users';
+import PaginationWrapper from '@/components/pagination-wrapper';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useState } from 'react';
+import { toast } from 'sonner';
 import CreateUserForm from './components/create-user-form';
 import EditUserForm from './components/edit-user-form';
-import PaginationWrapper from '@/components/pagination-wrapper';
-import { Skeleton } from '@/components/ui/skeleton';
-import { UsersAPI } from '@/apis/users';
-import { toast } from 'sonner';
-import { useState } from 'react';
 
 const UserPage = () => {
 	const [queryParams] = useSearchParams();
@@ -93,12 +93,17 @@ const UserPage = () => {
 		},
 	});
 
+	const params: any = {
+		page: page ? Number(page) : 1,
+		limit: limit ? Number(limit) : 10,
+	};
+
+	if (type) {
+		params.type = type as UserRole;
+	}
+
 	const { users, meta, isLoading, isError, error, refetch } = useUsers({
-		params: {
-			page: page ? Number(page) : 1,
-			limit: limit ? Number(limit) : 10,
-			type: (type as UserRole) || 'reader',
-		},
+		params,
 	});
 
 	// Hàm xử lý khi tab thay đổi
