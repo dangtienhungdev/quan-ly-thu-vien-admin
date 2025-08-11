@@ -316,8 +316,8 @@ const UserPage = () => {
 			>
 				<div className="w-full overflow-x-auto pb-2">
 					<TabsList>
-						<TabsTrigger value="reader">Người dùng</TabsTrigger>
-						<TabsTrigger value="admin">Nhân viên</TabsTrigger>
+						<TabsTrigger value="reader">Độc giả</TabsTrigger>
+						<TabsTrigger value="admin">Quản trị viên</TabsTrigger>
 					</TabsList>
 				</div>
 			</Tabs>

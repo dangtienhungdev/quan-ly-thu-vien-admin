@@ -13,6 +13,15 @@ export * from './books';
 // Export all types from categories
 export * from './categories';
 
+// Export all types from grade-levels
+export * from './grade-levels';
+
+// Export all types from book-categories
+export * from './book-categories';
+
+// Export all types from book-grade-levels
+export * from './book-grade-levels';
+
 // Export all types from publishers
 export * from './publishers';
 

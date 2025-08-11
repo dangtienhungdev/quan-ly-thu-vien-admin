@@ -16,6 +16,8 @@ import {
 	SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { useAllBookCategories } from '@/hooks/book-categories';
+import { useAllGradeLevels } from '@/hooks/grade-levels';
 import { useUploadImage } from '@/hooks/images';
 import type { Author } from '@/types/authors';
 import type { Book, UpdateBookRequest } from '@/types/books';
@@ -63,9 +65,27 @@ const updateBookSchema = z.object({
 	publisher_id: z.string().min(1, 'Nhà xuất bản là bắt buộc'),
 	category_id: z.string().min(1, 'Thể loại là bắt buộc'),
 	author_ids: z.array(z.string()).optional(),
+	main_category_id: z.string().optional(),
+	grade_level_ids: z.array(z.string()).optional(),
 });
 
-type UpdateBookFormData = z.infer<typeof updateBookSchema>;
+type UpdateBookFormData = {
+	title: string;
+	isbn: string;
+	publish_year: number;
+	edition: string;
+	description?: string;
+	cover_image: string;
+	language: string;
+	page_count: number;
+	book_type: 'physical' | 'ebook';
+	physical_type: 'library_use' | 'borrowable';
+	publisher_id: string;
+	category_id: string;
+	author_ids?: string[];
+	main_category_id?: string;
+	grade_level_ids?: string[];
+};
 
 interface EditBookFormProps {
 	book: Book;
@@ -88,6 +108,8 @@ const EditBookForm = ({
 }: EditBookFormProps) => {
 	const [selectedFile, setSelectedFile] = useState<File | null>(null);
 	const [previewUrl, setPreviewUrl] = useState<string>('');
+	const { bookCategories } = useAllBookCategories();
+	const { gradeLevels } = useAllGradeLevels();
 
 	const { uploadImage, isUploading: isUploadingImage } = useUploadImage({
 		onSuccess: (image) => {
@@ -122,6 +144,8 @@ const EditBookForm = ({
 			publisher_id: book.publisher_id,
 			category_id: book.category_id,
 			author_ids: book.authors?.map((author) => author.id) || [],
+			main_category_id: (book as any).main_category_id || ('none' as any),
+			grade_level_ids: (book as any).grade_level_ids || [],
 		},
 	});
 
@@ -141,6 +165,8 @@ const EditBookForm = ({
 			publisher_id: book.publisher_id,
 			category_id: book.category_id,
 			author_ids: book.authors?.map((author) => author.id) || [],
+			main_category_id: (book as any).main_category_id || ('none' as any),
+			grade_level_ids: (book as any).grade_level_ids || [],
 		});
 		setPreviewUrl(book.cover_image || '');
 	}, [book, form]);
@@ -159,6 +185,14 @@ const EditBookForm = ({
 			...data,
 			description: data.description || undefined,
 			author_ids: data.author_ids || undefined,
+			main_category_id:
+				!data.main_category_id || data.main_category_id === ('none' as any)
+					? null
+					: data.main_category_id,
+			grade_level_ids:
+				data.grade_level_ids && data.grade_level_ids.length > 0
+					? data.grade_level_ids
+					: undefined,
 		});
 	};
 
@@ -439,6 +473,90 @@ const EditBookForm = ({
 															field.value?.filter((id) => id !== authorId)
 														);
 													}}
+													className="h-6 w-6 p-0"
+												>
+													<IconX className="h-3 w-3" />
+												</Button>
+											</div>
+										);
+									})}
+								</div>
+							)}
+							<FormMessage />
+						</FormItem>
+					)}
+				/>
+
+				{/* Main Book Category (book-categories) */}
+				<FormField
+					control={form.control}
+					name="main_category_id"
+					render={({ field }) => (
+						<FormItem>
+							<FormLabel>Thể loại chính (tùy chọn)</FormLabel>
+							<Select onValueChange={field.onChange} value={field.value}>
+								<FormControl>
+									<SelectTrigger className="w-full">
+										<SelectValue placeholder="Chọn thể loại chính" />
+									</SelectTrigger>
+								</FormControl>
+								<SelectContent>
+									<SelectItem value={'none' as any}>Không chọn</SelectItem>
+									{bookCategories?.map((bc) => (
+										<SelectItem key={bc.id} value={bc.id}>
+											{bc.name}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+							<FormMessage />
+						</FormItem>
+					)}
+				/>
+
+				{/* Grade Levels (multi-select) */}
+				<FormField
+					control={form.control}
+					name="grade_level_ids"
+					render={({ field }) => (
+						<FormItem>
+							<FormLabel>Khối lớp (tùy chọn)</FormLabel>
+							<Select
+								onValueChange={(value) => {
+									const list = field.value || [];
+									if (!list.includes(value)) field.onChange([...list, value]);
+								}}
+							>
+								<FormControl>
+									<SelectTrigger className="w-full">
+										<SelectValue placeholder="Chọn khối lớp" />
+									</SelectTrigger>
+								</FormControl>
+								<SelectContent>
+									{gradeLevels?.map((g) => (
+										<SelectItem key={g.id} value={g.id}>
+											{g.name}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+							{field.value && field.value.length > 0 && (
+								<div className="mt-2 space-y-1">
+									{field.value.map((id) => {
+										const gl = gradeLevels?.find((g) => g.id === id);
+										return (
+											<div
+												key={id}
+												className="flex items-center justify-between bg-muted p-2 rounded"
+											>
+												<span className="text-sm">{gl?.name}</span>
+												<Button
+													type="button"
+													variant="ghost"
+													size="sm"
+													onClick={() =>
+														field.onChange(field.value?.filter((x) => x !== id))
+													}
 													className="h-6 w-6 p-0"
 												>
 													<IconX className="h-3 w-3" />

@@ -244,7 +244,7 @@ const ReaderTypesPage = () => {
 		<>
 			<div className="mb-2 flex items-center justify-between space-y-2">
 				<h1 className="text-2xl font-bold tracking-tight">
-					Quản lý loại độc giả
+					Cài đặt quyền mượn sách
 				</h1>
 				{/* <div className="flex items-center space-x-2">
 					<Sheet open={isCreateSheetOpen} onOpenChange={setIsCreateSheetOpen}>

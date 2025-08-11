@@ -4,6 +4,9 @@
 
 Module Quản lý Sách cung cấp các API để quản lý thông tin sách trong hệ thống thư viện. Module này cho phép thực hiện các thao tác CRUD trên sách, bao gồm việc thêm, sửa, xóa và lấy thông tin sách.
 
+- Hỗ trợ gán "thể loại chính" cho sách qua `main_category_id` (tham chiếu `book_categories`)
+- Hỗ trợ gán nhiều "khối lớp" cho sách qua `grade_level_ids` (quan hệ N-N qua `book_grade_levels`)
+
 ## 🔒 Yêu cầu xác thực
 
 - **JWT Authentication**: Tất cả API yêu cầu JWT token hợp lệ.
@@ -37,7 +40,10 @@ POST /books
   	"book_type": "physical",
   	"physical_type": "borrowable",
   	"publisher_id": "uuid_of_publisher",
-  	"category_id": "uuid_of_category"
+  	"category_id": "uuid_of_category",
+  	"main_category_id": "uuid_of_book_category", // optional
+  	"author_ids": ["uuid_of_author_1", "uuid_of_author_2"],
+  	"grade_level_ids": ["uuid_grade_1", "uuid_grade_2"] // optional
   }
   ```
 - **Response**: 201 - Thông tin sách đã tạo.
@@ -157,7 +163,10 @@ POST /books/bulk
   		"book_type": "physical",
   		"physical_type": "borrowable",
   		"publisher_id": "uuid_of_publisher_1",
-  		"category_id": "uuid_of_category_1"
+  		"category_id": "uuid_of_category_1",
+  		"main_category_id": "uuid_of_book_category_1",
+  		"author_ids": ["uuid_author_1"],
+  		"grade_level_ids": ["uuid_grade_1", "uuid_grade_2"]
   	},
   	{
   		"title": "Tên sách 2",
@@ -171,7 +180,10 @@ POST /books/bulk
   		"book_type": "physical",
   		"physical_type": "borrowable",
   		"publisher_id": "uuid_of_publisher_2",
-  		"category_id": "uuid_of_category_2"
+  		"category_id": "uuid_of_category_2",
+  		"main_category_id": null,
+  		"author_ids": ["uuid_author_2", "uuid_author_3"],
+  		"grade_level_ids": []
   	}
   ]
   ```
@@ -184,15 +196,18 @@ POST /books/bulk
 - **title**: Bắt buộc, string, max 255 ký tự.
 - **isbn**: Bắt buộc, string, unique.
 - **publish_year**: Bắt buộc, number.
-- **edition**: Bắt buộc, string.
+- **edition**: Optional, string.
 - **description**: Optional, string.
 - **cover_image**: Optional, string (URL).
 - **language**: Bắt buộc, string.
 - **page_count**: Bắt buộc, number.
 - **book_type**: Bắt buộc, enum (physical, ebook).
-- **physical_type**: Bắt buộc, enum (library_use, borrowable).
+- **physical_type**: Optional, enum (library_use, borrowable) – chỉ khi `book_type = physical`.
 - **publisher_id**: Bắt buộc, UUID.
 - **category_id**: Bắt buộc, UUID.
+- **main_category_id**: Optional, UUID (tham chiếu `book_categories.id`).
+- **author_ids**: Bắt buộc, array UUID.
+- **grade_level_ids**: Optional, array UUID (thiết lập mapping với `grade_levels`).
 
 ## 📊 Ví dụ Sử dụng
 
@@ -214,7 +229,10 @@ curl -X POST "http://localhost:8002/books" \
     "book_type": "physical",
     "physical_type": "borrowable",
     "publisher_id": "uuid_of_publisher",
-    "category_id": "uuid_of_category"
+    "category_id": "uuid_of_category",
+    "main_category_id": "uuid_of_book_category",
+    "author_ids": ["uuid_author_1"],
+    "grade_level_ids": ["uuid_grade_1", "uuid_grade_2"]
   }'
 ```
 
@@ -263,7 +281,9 @@ curl -X PATCH "http://localhost:8002/books/{id}" \
   -H "Content-Type: application/json" \
   -d '{
     "title": "Tên sách cập nhật",
-    "description": "Mô tả cập nhật"
+    "description": "Mô tả cập nhật",
+    "main_category_id": "uuid_book_category_moi",
+    "grade_level_ids": ["uuid_grade_1", "uuid_grade_3"]
   }'
 ```
 
@@ -293,28 +313,17 @@ curl -X POST "http://localhost:8002/books/bulk" \
       "book_type": "physical",
       "physical_type": "borrowable",
       "publisher_id": "uuid_of_publisher_1",
-      "category_id": "uuid_of_category_1"
-    },
-    {
-      "title": "Tên sách 2",
-      "isbn": "0987654321",
-      "publish_year": 2024,
-      "edition": "1st",
-      "description": "Mô tả sách 2",
-      "cover_image": "url_to_image_2",
-      "language": "Tiếng Việt",
-      "page_count": 250,
-      "book_type": "physical",
-      "physical_type": "borrowable",
-      "publisher_id": "uuid_of_publisher_2",
-      "category_id": "uuid_of_category_2"
+      "category_id": "uuid_of_category_1",
+      "main_category_id": "uuid_of_book_category_1",
+      "author_ids": ["uuid_author_1"],
+      "grade_level_ids": ["uuid_grade_1", "uuid_grade_2"]
     }
   ]'
 ```
 
 ## 🔍 Response Format
 
-### BookWithAuthors Response
+### BookWithAuthors Response (rút gọn)
 
 ```json
 {
@@ -330,39 +339,16 @@ curl -X POST "http://localhost:8002/books/bulk" \
 	"book_type": "physical",
 	"physical_type": "borrowable",
 	"slug": "ten-sach",
+	"main_category_id": "uuid_of_book_category",
 	"authors": [
-		{
-			"id": "author_uuid",
-			"author_name": "Tên tác giả",
-			"slug": "ten-tac-gia",
-			"bio": "Tiểu sử tác giả",
-			"nationality": "Việt Nam"
-		}
+		{ "id": "author_uuid", "author_name": "Tên tác giả", "slug": "ten-tac-gia" }
 	],
 	"createdAt": "2024-01-01T00:00:00.000Z",
 	"updatedAt": "2024-01-01T00:00:00.000Z"
 }
 ```
 
-### Paginated Response
-
-```json
-{
-	"data": [
-		{
-			// BookWithAuthors object
-		}
-	],
-	"meta": {
-		"page": 1,
-		"limit": 10,
-		"totalItems": 100,
-		"totalPages": 10,
-		"hasNextPage": true,
-		"hasPreviousPage": false
-	}
-}
-```
+> Lưu ý: Các endpoint chi tiết có thể trả thêm `mainCategory` (object) nếu được load quan hệ.
 
 ## ⚠️ Lưu ý
 
@@ -371,3 +357,6 @@ curl -X POST "http://localhost:8002/books/bulk" \
 3. **Port**: API chạy trên port 8002
 4. **Response Type**: Sử dụng `BookWithAuthorsDto` để trả về thông tin sách kèm tác giả
 5. **Bulk Create**: Endpoint `/books/bulk` cho phép tạo nhiều sách cùng lúc
+6. **Tích hợp**:
+   - `main_category_id` tham chiếu `book_categories`
+   - `grade_level_ids` sẽ được đồng bộ qua `book_grade_levels` (ghi đè toàn bộ liên kết hiện có)

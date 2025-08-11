@@ -62,7 +62,7 @@ export const sidebarData: SidebarData = {
 			title: 'Hệ thống thư viện',
 			items: [
 				{
-					title: 'Quản lý loại độc giả',
+					title: 'Cài đặt quyền mượn sách',
 					icon: Users,
 					url: '/reader-types',
 				},
@@ -75,6 +75,11 @@ export const sidebarData: SidebarData = {
 					title: 'Quản lý danh mục',
 					icon: Library,
 					url: '/categories',
+				},
+				{
+					title: 'Quản lý Khối lớp',
+					icon: Library,
+					url: '/grade-levels',
 				},
 				{
 					title: 'Quản lý nhà xuất bản',
@@ -95,6 +100,11 @@ export const sidebarData: SidebarData = {
 					title: 'Thông tin sách',
 					icon: BookOpen,
 					url: '/books',
+				},
+				{
+					title: 'Thể loại chi tiết',
+					icon: Library,
+					url: '/book-categories',
 				},
 				{
 					title: 'Bản sao vật lý',

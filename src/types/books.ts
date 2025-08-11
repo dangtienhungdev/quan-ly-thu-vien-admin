@@ -19,8 +19,9 @@ export interface Book extends BaseEntity {
 	physical_type: PhysicalType;
 	publisher_id: string;
 	category_id: string;
+	main_category_id?: string | null;
 	publisher?: BookPublisher;
-	category?: BookCategory;
+	category?: BookRelatedCategory;
 	authors?: BookAuthor[];
 }
 
@@ -37,7 +38,9 @@ export interface CreateBookRequest {
 	physical_type: PhysicalType;
 	publisher_id: string;
 	category_id: string;
+	main_category_id?: string | null;
 	author_ids?: string[];
+	grade_level_ids?: string[];
 }
 
 export interface UpdateBookRequest {
@@ -53,7 +56,9 @@ export interface UpdateBookRequest {
 	physical_type?: PhysicalType;
 	publisher_id?: string;
 	category_id?: string;
+	main_category_id?: string | null;
 	author_ids?: string[];
+	grade_level_ids?: string[];
 }
 
 export interface BookSearchQuery {
@@ -78,7 +83,7 @@ export interface BookPublisher {
 	slug: string;
 }
 
-export interface BookCategory {
+export interface BookRelatedCategory {
 	id: string;
 	category_name: string;
 	slug: string;

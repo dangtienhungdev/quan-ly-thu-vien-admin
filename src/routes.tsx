@@ -4,6 +4,7 @@ import { Outlet, createBrowserRouter } from 'react-router-dom';
 import { AuthProvider } from '@/context/auth-context';
 import { AuthenticatedLayout } from './layout/authenticated-layout';
 import AuthorsPage from './pages/authors/page';
+import BookCategoriesPage from './pages/book-categories/page';
 import EBookDetailPage from './pages/books/ebook/[id]/page';
 import BooksPage from './pages/books/page';
 import PhysicalBookDetailPage from './pages/books/physical/[id]/page';
@@ -12,6 +13,7 @@ import CategoriesPage from './pages/categories/page';
 import Dashboard from './pages/dashboard/page';
 import EBooksPage from './pages/ebooks/page';
 import FinesPage from './pages/fines';
+import GradeLevelsPage from './pages/grade-levels/page';
 import LoginPage from './pages/login/page';
 import NotFound from './pages/not-found';
 import PhysicalBooksPage from './pages/physical-books/page';
@@ -66,6 +68,14 @@ const routes = createBrowserRouter([
 					{
 						path: '/categories',
 						element: <CategoriesPage />,
+					},
+					{
+						path: '/grade-levels',
+						element: <GradeLevelsPage />,
+					},
+					{
+						path: '/book-categories',
+						element: <BookCategoriesPage />,
 					},
 					{
 						path: '/publishers',
