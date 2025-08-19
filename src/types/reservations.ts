@@ -45,6 +45,24 @@ export interface CreateReservationRequest {
 	priority?: number;
 }
 
+export interface CreateMultipleReservationsRequest {
+	reservations: CreateReservationRequest[];
+}
+
+export interface BulkReservationResult {
+	index: number;
+	error: string;
+	data: CreateReservationRequest;
+}
+
+export interface BulkReservationsResponse {
+	created: Reservation[];
+	failed: BulkReservationResult[];
+	total: number;
+	successCount: number;
+	failureCount: number;
+}
+
 export interface UpdateReservationRequest {
 	reservation_date?: string;
 	expiry_date?: string;

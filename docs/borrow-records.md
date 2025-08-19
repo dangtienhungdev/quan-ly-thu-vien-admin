@@ -95,7 +95,17 @@ GET /borrow-records/overdue
 - **Query Parameters**: Hỗ trợ phân trang
 - **Response**: 200 - Danh sách sách mượn quá hạn
 
-### 7. Lấy Thống Kê Mượn Sách
+### 7. Lấy Danh Sách Yêu Cầu Chờ Phê Duyệt
+
+```http
+GET /borrow-records/pending-approval
+```
+
+- **Mô tả**: Lấy danh sách yêu cầu mượn sách đang chờ phê duyệt
+- **Query Parameters**: Hỗ trợ phân trang
+- **Response**: 200 - Danh sách yêu cầu chờ phê duyệt
+
+### 8. Lấy Thống Kê Mượn Sách
 
 ```http
 GET /borrow-records/stats
@@ -141,7 +151,35 @@ PATCH /borrow-records/:id
   - 400: Dữ liệu không hợp lệ
   - 403: Không có quyền truy cập
 
-### 10. Trả Sách
+### 10. Phê Duyệt Yêu Cầu Mượn Sách
+
+```http
+PATCH /borrow-records/:id/approve
+```
+
+- **Mô tả**: Phê duyệt yêu cầu mượn sách (chỉ Admin)
+- **Body**: { librarianId: string, notes?: string }
+- **Response**: 200 - Thông tin bản ghi sau khi phê duyệt
+- **Lỗi**:
+  - 400: Yêu cầu không ở trạng thái chờ phê duyệt
+  - 404: Không tìm thấy bản ghi mượn sách
+  - 403: Không có quyền truy cập
+
+### 11. Từ Chối Yêu Cầu Mượn Sách
+
+```http
+PATCH /borrow-records/:id/reject
+```
+
+- **Mô tả**: Từ chối yêu cầu mượn sách (chỉ Admin)
+- **Body**: { librarianId: string, reason: string }
+- **Response**: 200 - Thông tin bản ghi sau khi từ chối
+- **Lỗi**:
+  - 400: Yêu cầu không ở trạng thái chờ phê duyệt
+  - 404: Không tìm thấy bản ghi mượn sách
+  - 403: Không có quyền truy cập
+
+### 12. Trả Sách
 
 ```http
 PATCH /borrow-records/:id/return
@@ -155,7 +193,7 @@ PATCH /borrow-records/:id/return
   - 404: Không tìm thấy bản ghi mượn sách
   - 403: Không có quyền truy cập
 
-### 11. Gia Hạn Sách
+### 13. Gia Hạn Sách
 
 ```http
 PATCH /borrow-records/:id/renew
@@ -169,7 +207,7 @@ PATCH /borrow-records/:id/renew
   - 404: Không tìm thấy bản ghi mượn sách
   - 403: Không có quyền truy cập
 
-### 12. Xóa Bản Ghi Mượn Sách
+### 14. Xóa Bản Ghi Mượn Sách
 
 ```http
 DELETE /borrow-records/:id
@@ -206,7 +244,7 @@ DELETE /borrow-records/:id
 1. **Tạo Bản Ghi Mượn Sách**
 
    - Tự động tạo ngày mượn và ngày hạn
-   - Mặc định trạng thái 'borrowed'
+   - Mặc định trạng thái 'pending_approval'
    - Số lần gia hạn mặc định là 0
 
 2. **Trả Sách**
@@ -223,12 +261,20 @@ DELETE /borrow-records/:id
 
 4. **Quản Lý Trạng Thái**
 
+   - pending_approval: Chờ phê duyệt
    - borrowed: Đang mượn
    - returned: Đã trả
    - overdue: Quá hạn
    - renewed: Đã gia hạn
 
-5. **Tự Động Cập Nhật Quá Hạn**
+5. **Quy Trình Phê Duyệt**
+
+   - Yêu cầu mượn sách mới tạo có trạng thái 'pending_approval'
+   - Admin có thể phê duyệt hoặc từ chối yêu cầu
+   - Khi phê duyệt: chuyển sang trạng thái 'borrowed'
+   - Khi từ chối: chuyển sang trạng thái 'returned' với ghi chú lý do từ chối
+
+6. **Tự Động Cập Nhật Quá Hạn**
    - Hệ thống tự động cập nhật trạng thái quá hạn
    - Dựa trên ngày hạn và trạng thái hiện tại
 

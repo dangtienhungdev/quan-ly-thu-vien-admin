@@ -1,4 +1,6 @@
 import type {
+	BulkReservationsResponse,
+	CreateMultipleReservationsRequest,
 	CreateReservationRequest,
 	ReservationBookQuery,
 	ReservationDateRangeQuery,
@@ -20,6 +22,14 @@ export const ReservationsAPI = {
 		data: CreateReservationRequest
 	): Promise<ReservationResponse> => {
 		const res = await instance.post('/api/reservations', data);
+		return res.data;
+	},
+
+	// Create multiple reservations
+	createBulk: async (
+		data: CreateMultipleReservationsRequest
+	): Promise<BulkReservationsResponse> => {
+		const res = await instance.post('/api/reservations/bulk', data);
 		return res.data;
 	},
 

@@ -1,15 +1,7 @@
-import { BorrowRecordsAPI } from '@/apis';
+import { ReservationsAPI } from '@/apis/reservations';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from '@/components/ui/select';
+
 import {
 	Table,
 	TableBody,
@@ -19,152 +11,234 @@ import {
 	TableRow,
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import type {
-	BorrowStatus,
-	CreateBorrowRecordRequest,
-	RenewBookRequest,
-	ReturnBookRequest,
-} from '@/types';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+	useApproveBorrowRecord,
+	useBorrowRecordsByStatus,
+	useBorrowRecordsStats,
+	useCreateBorrowRecord,
+	useDeleteBorrowRecord,
+	useRejectBorrowRecord,
+	useRenewBook,
+	useReturnBook,
+	useSendReminders,
+} from '@/hooks/borrow-records';
+import { useUpdatePhysicalCopyStatus } from '@/hooks/physical-copies';
+import type { BorrowStatus } from '@/types/borrow-records';
+import { useQueryClient } from '@tanstack/react-query';
 import {
 	AlertTriangle,
+	Bell,
 	BookOpen,
 	Calendar,
 	CheckCircle,
 	Eye,
 	Plus,
-	Search,
-	Trash2,
+	ThumbsUp,
 } from 'lucide-react';
 import { useState } from 'react';
-import { toast } from 'sonner';
 import {
+	createSearchParams,
+	useNavigate,
+	useSearchParams,
+} from 'react-router-dom';
+import {
+	ApproveRejectDialog,
 	CreateBorrowRecordDialog,
 	DeleteConfirmDialog,
 	RenewBookDialog,
 	ReturnBookDialog,
+	StatisticsCards,
 } from './components';
 
 export default function BorrowRecordsPage() {
-	const [searchQuery, setSearchQuery] = useState('');
-	const [selectedStatus, setSelectedStatus] = useState<string>('all');
-	const [activeTab, setActiveTab] = useState('all');
+	const navigate = useNavigate();
+
+	const [params] = useSearchParams();
+	const status = params.get('status') || 'all';
+	const page = params.get('page') || '1';
+	const limit = params.get('limit') || '20';
+
+	const queryClient = useQueryClient();
+
+	const borrowRecordStatus = {
+		status: status as BorrowStatus,
+		page: Number(page),
+		limit: Number(limit),
+	};
+
 	const [showCreateDialog, setShowCreateDialog] = useState(false);
 	const [showReturnDialog, setShowReturnDialog] = useState(false);
 	const [showRenewDialog, setShowRenewDialog] = useState(false);
 	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+	const [showApproveRejectDialog, setShowApproveRejectDialog] = useState(false);
 	const [selectedRecord, setSelectedRecord] = useState<any>(null);
 	const [recordToDelete, setRecordToDelete] = useState<any>(null);
 	const [recordToReturn, setRecordToReturn] = useState<any>(null);
 	const [recordToRenew, setRecordToRenew] = useState<any>(null);
+	const [recordToApproveReject, setRecordToApproveReject] = useState<any>(null);
+	const [approveRejectAction, setApproveRejectAction] = useState<
+		'approve' | 'reject'
+	>('approve');
+	const [pendingReservationsByBook, setPendingReservationsByBook] = useState<
+		Record<string, boolean>
+	>({});
+	const [approvedBooks, setApprovedBooks] = useState<Record<string, boolean>>(
+		{}
+	);
 
-	const queryClient = useQueryClient();
+	// Hooks for different data sources
+	const { stats } = useBorrowRecordsStats();
 
-	// Fetch borrow records data
-	const { data: borrowRecordsData, isLoading: isLoadingBorrowRecords } =
-		useQuery({
-			queryKey: [
-				'borrow-records',
-				{ search: searchQuery, status: selectedStatus },
-			],
-			queryFn: () => BorrowRecordsAPI.getAll({ page: 1, limit: 20 }),
+	// Hook cho filter theo status
+	const {
+		borrowRecords: statusRecords,
+		meta: statusMeta,
+		isLoading: isLoadingStatus,
+	} = useBorrowRecordsByStatus({
+		params: borrowRecordStatus,
+		enabled: true, // Luôn enable để phản ứng với thay đổi params
+	});
+
+	// Mutation hooks
+	const { createBorrowRecord, isCreating } = useCreateBorrowRecord();
+	const { returnBook, isReturning } = useReturnBook();
+	const { renewBook, isRenewing } = useRenewBook();
+	const { deleteBorrowRecord, isDeleting } = useDeleteBorrowRecord();
+	const { approveBorrowRecord, isApproving } = useApproveBorrowRecord();
+	const { rejectBorrowRecord, isRejecting } = useRejectBorrowRecord();
+
+	// New hooks for reservation and physical copy management
+	const updatePhysicalCopyStatusMutation = useUpdatePhysicalCopyStatus();
+	const { mutate: sendReminders, isPending: isSendingReminders } =
+		useSendReminders();
+
+	// Helper function to get current data based on active tab and filters
+	const getCurrentData = () => {
+		// Sử dụng statusRecords cho tất cả các tab vì hook useBorrowRecordsByStatus đã được enable
+		return {
+			records: statusRecords,
+			meta: statusMeta,
+			isLoading: isLoadingStatus,
+		};
+	};
+
+	const { records, isLoading } = getCurrentData();
+
+	const handleCreateBorrowRecord = (data: any) => {
+		createBorrowRecord(data, {
+			onSuccess: () => {
+				setShowCreateDialog(false);
+
+				// Invalidate queries to refresh data
+				queryClient.invalidateQueries({ queryKey: ['borrow-records'] });
+				queryClient.invalidateQueries({ queryKey: ['borrow-records-stats'] });
+				queryClient.invalidateQueries({
+					queryKey: ['borrow-records-by-status', borrowRecordStatus],
+				});
+				queryClient.invalidateQueries({
+					queryKey: ['borrow-records-by-status', borrowRecordStatus],
+				});
+			},
 		});
-
-	// Fetch overdue records
-	const { data: overdueRecords } = useQuery({
-		queryKey: ['borrow-records-overdue'],
-		queryFn: () => BorrowRecordsAPI.getOverdue({ page: 1, limit: 10 }),
-	});
-
-	// Fetch statistics
-	const { data: stats } = useQuery({
-		queryKey: ['borrow-records-stats'],
-		queryFn: () => BorrowRecordsAPI.getStats(),
-	});
-
-	// Create borrow record mutation
-	const createBorrowRecordMutation = useMutation({
-		mutationFn: (data: CreateBorrowRecordRequest) =>
-			BorrowRecordsAPI.create(data),
-		onSuccess: () => {
-			toast.success('Tạo giao dịch mượn thành công!');
-			queryClient.invalidateQueries({ queryKey: ['borrow-records'] });
-			queryClient.invalidateQueries({ queryKey: ['borrow-records-stats'] });
-			setShowCreateDialog(false);
-		},
-		onError: (error: any) => {
-			toast.error(error.message || 'Có lỗi xảy ra khi tạo giao dịch mượn');
-		},
-	});
-
-	// Return book mutation
-	const returnBookMutation = useMutation({
-		mutationFn: ({ id, data }: { id: string; data: ReturnBookRequest }) =>
-			BorrowRecordsAPI.returnBook(id, data),
-		onSuccess: () => {
-			toast.success('Trả sách thành công!');
-			queryClient.invalidateQueries({ queryKey: ['borrow-records'] });
-			queryClient.invalidateQueries({ queryKey: ['borrow-records-overdue'] });
-			queryClient.invalidateQueries({ queryKey: ['borrow-records-stats'] });
-			setShowReturnDialog(false);
-			setRecordToReturn(null);
-		},
-		onError: (error: any) => {
-			toast.error(error.message || 'Có lỗi xảy ra khi trả sách');
-		},
-	});
-
-	// Renew book mutation
-	const renewBookMutation = useMutation({
-		mutationFn: ({ id, data }: { id: string; data: RenewBookRequest }) =>
-			BorrowRecordsAPI.renewBook(id, data),
-		onSuccess: () => {
-			toast.success('Gia hạn sách thành công!');
-			queryClient.invalidateQueries({ queryKey: ['borrow-records'] });
-			queryClient.invalidateQueries({ queryKey: ['borrow-records-due-soon'] });
-			queryClient.invalidateQueries({ queryKey: ['borrow-records-stats'] });
-			setShowRenewDialog(false);
-			setRecordToRenew(null);
-		},
-		onError: (error: any) => {
-			toast.error(error.message || 'Có lỗi xảy ra khi gia hạn sách');
-		},
-	});
-
-	// Delete borrow record mutation
-	const deleteBorrowRecordMutation = useMutation({
-		mutationFn: (id: string) => BorrowRecordsAPI.delete(id),
-		onSuccess: () => {
-			toast.success('Xóa giao dịch thành công!');
-			queryClient.invalidateQueries({ queryKey: ['borrow-records'] });
-			queryClient.invalidateQueries({ queryKey: ['borrow-records-stats'] });
-		},
-		onError: (error: any) => {
-			toast.error(error.message || 'Có lỗi xảy ra khi xóa giao dịch');
-		},
-	});
-
-	const handleSearch = (value: string) => {
-		setSearchQuery(value);
 	};
 
-	const handleStatusFilter = (status: string) => {
-		setSelectedStatus(status);
-	};
-
-	const handleCreateBorrowRecord = (data: CreateBorrowRecordRequest) => {
-		createBorrowRecordMutation.mutate(data);
-	};
-
-	const handleReturnBook = (data: ReturnBookRequest) => {
+	const handleReturnBook = async (data: any) => {
 		if (recordToReturn) {
-			returnBookMutation.mutate({ id: recordToReturn.id, data });
+			try {
+				// First, return the borrow record
+				await returnBook(
+					{ id: recordToReturn.id, data },
+					{
+						onSuccess: () => {
+							setShowReturnDialog(false);
+							setRecordToReturn(null);
+
+							// Invalidate queries to refresh data
+							queryClient.invalidateQueries({ queryKey: ['borrow-records'] });
+							queryClient.invalidateQueries({
+								queryKey: ['borrow-records-stats'],
+							});
+							queryClient.invalidateQueries({
+								queryKey: ['borrow-records-by-status', borrowRecordStatus],
+							});
+						},
+					}
+				);
+
+				// Then, update physical copy status to 'available'
+				const physicalCopyId = recordToReturn.physicalCopy?.id;
+				if (physicalCopyId) {
+					await updatePhysicalCopyStatusMutation.mutateAsync({
+						id: physicalCopyId,
+						data: {
+							status: 'available',
+							notes: 'Sách đã được trả và sẵn sàng cho mượn',
+						},
+					});
+				}
+			} catch (error) {
+				console.error('Error during return process:', error);
+				// Still try to return the borrow record even if physical copy update fails
+				returnBook(
+					{ id: recordToReturn.id, data },
+					{
+						onSuccess: () => {
+							setShowReturnDialog(false);
+							setRecordToReturn(null);
+						},
+					}
+				);
+			}
 		}
 	};
 
-	const handleRenewBook = (data: RenewBookRequest) => {
+	const handleRenewBook = async (data: any) => {
 		if (recordToRenew) {
-			renewBookMutation.mutate({ id: recordToRenew.id, data });
+			try {
+				// Renew the borrow record
+				await renewBook(
+					{ id: recordToRenew.id, data },
+					{
+						onSuccess: () => {
+							setShowRenewDialog(false);
+							setRecordToRenew(null);
+
+							// Invalidate queries to refresh data
+							queryClient.invalidateQueries({ queryKey: ['borrow-records'] });
+							queryClient.invalidateQueries({
+								queryKey: ['borrow-records-stats'],
+							});
+							queryClient.invalidateQueries({
+								queryKey: ['borrow-records-by-status', borrowRecordStatus],
+							});
+						},
+					}
+				);
+
+				// Update physical copy status to 'borrowed' (still borrowed but renewed)
+				const physicalCopyId = recordToRenew.physicalCopy?.id;
+				if (physicalCopyId) {
+					await updatePhysicalCopyStatusMutation.mutateAsync({
+						id: physicalCopyId,
+						data: {
+							status: 'borrowed',
+							notes: 'Sách đã được gia hạn thời gian mượn',
+						},
+					});
+				}
+			} catch (error) {
+				console.error('Error during renew process:', error);
+				// Still try to renew the borrow record even if physical copy update fails
+				renewBook(
+					{ id: recordToRenew.id, data },
+					{
+						onSuccess: () => {
+							setShowRenewDialog(false);
+							setRecordToRenew(null);
+						},
+					}
+				);
+			}
 		}
 	};
 
@@ -175,9 +249,174 @@ export default function BorrowRecordsPage() {
 
 	const confirmDelete = () => {
 		if (recordToDelete) {
-			deleteBorrowRecordMutation.mutate(recordToDelete.id);
-			setShowDeleteDialog(false);
-			setRecordToDelete(null);
+			deleteBorrowRecord(recordToDelete.id, {
+				onSuccess: () => {
+					setShowDeleteDialog(false);
+					setRecordToDelete(null);
+
+					// Invalidate queries to refresh data
+					queryClient.invalidateQueries({ queryKey: ['borrow-records'] });
+					queryClient.invalidateQueries({ queryKey: ['borrow-records-stats'] });
+					queryClient.invalidateQueries({
+						queryKey: ['borrow-records-by-status', borrowRecordStatus],
+					});
+				},
+			});
+		}
+	};
+
+	const handleApproveRecord = (record: any) => {
+		setRecordToApproveReject(record);
+		setApproveRejectAction('approve');
+		setShowApproveRejectDialog(true);
+	};
+
+	const handleRejectRecord = (record: any) => {
+		setRecordToApproveReject(record);
+		setApproveRejectAction('reject');
+		setShowApproveRejectDialog(true);
+	};
+
+	const handleApproveRejectSubmit = async (data: any) => {
+		if (approveRejectAction === 'approve') {
+			try {
+				// First, get pending reservations for this book
+				const bookId = recordToApproveReject.physicalCopy?.book?.id;
+
+				// Finally, approve the borrow record
+				approveBorrowRecord(
+					{
+						id: recordToApproveReject.id,
+						data,
+					},
+					{
+						onSuccess: async () => {
+							if (bookId) {
+								// Get pending reservations for this book
+								const pendingReservationsResponse =
+									await ReservationsAPI.getByBook({
+										bookId,
+										page: 1,
+										limit: 100,
+									});
+
+								const pendingReservations =
+									pendingReservationsResponse.data.filter(
+										(reservation) => reservation.status === 'pending'
+									);
+
+								// Check if there are other pending borrow records for the same book
+								const otherPendingBorrowRecords = records.filter(
+									(record) =>
+										record.status === 'pending_approval' &&
+										record.id !== recordToApproveReject.id &&
+										record.physicalCopy?.book?.id === bookId
+								);
+
+								// Mark this book as approved to disable approve buttons for other records
+								setApprovedBooks((prev) => ({
+									...prev,
+									[bookId]: true,
+								}));
+
+								// If there are pending reservations, create bulk reservations for them
+								// if (pendingReservations.length > 0) {
+								// const bulkReservationsData = {
+								// 	reservations: pendingReservations.map((reservation) => ({
+								// 		reader_id: reservation.reader_id,
+								// 		book_id: reservation.book_id,
+								// 		reservation_date: new Date().toISOString(),
+								// 		expiry_date: new Date(
+								// 			Date.now() + 7 * 24 * 60 * 60 * 1000
+								// 		).toISOString(), // 7 days from now
+								// 		reader_notes: 'Tự động tạo từ yêu cầu mượn sách',
+								// 		priority: 1,
+								// 	})),
+								// };
+								// console.log(
+								// 	'🚀 ~ handleApproveRejectSubmit ~ bulkReservationsData:',
+								// 	bulkReservationsData
+								// );
+
+								// // Create bulk reservations
+								// await createBulkReservationsMutation.mutateAsync(
+								// 	bulkReservationsData
+								// );
+								// }
+							}
+							setShowApproveRejectDialog(false);
+							setRecordToApproveReject(null);
+
+							// Invalidate queries to refresh data
+							queryClient.invalidateQueries({ queryKey: ['borrow-records'] });
+							queryClient.invalidateQueries({
+								queryKey: ['borrow-records-stats'],
+							});
+							queryClient.invalidateQueries({
+								queryKey: ['borrow-records-by-status', borrowRecordStatus],
+							});
+						},
+					}
+				);
+
+				// Update physical copy status to 'borrowed'
+				const physicalCopyId = recordToApproveReject.physicalCopy?.id;
+				if (physicalCopyId) {
+					await updatePhysicalCopyStatusMutation.mutateAsync({
+						id: physicalCopyId,
+						data: {
+							status: 'borrowed',
+							notes: 'Đang được mượn bởi độc giả',
+						},
+					});
+				}
+			} catch (error) {
+				console.error('Error during approval process:', error);
+				// Still try to approve the borrow record even if other operations fail
+				approveBorrowRecord(
+					{
+						id: recordToApproveReject.id,
+						data,
+					},
+					{
+						onSuccess: () => {
+							setShowApproveRejectDialog(false);
+							setRecordToApproveReject(null);
+						},
+					}
+				);
+			}
+		} else {
+			rejectBorrowRecord(
+				{
+					id: recordToApproveReject.id,
+					data,
+				},
+				{
+					onSuccess: () => {
+						setShowApproveRejectDialog(false);
+						setRecordToApproveReject(null);
+
+						// Invalidate queries to refresh data
+						queryClient.invalidateQueries({ queryKey: ['borrow-records'] });
+						queryClient.invalidateQueries({
+							queryKey: ['borrow-records-stats'],
+						});
+						queryClient.invalidateQueries({
+							queryKey: ['borrow-records-by-status', borrowRecordStatus],
+						});
+					},
+				}
+			);
+		}
+	};
+
+	const handleApproveRejectDialogClose = (open: boolean) => {
+		setShowApproveRejectDialog(open);
+		if (!open) {
+			setRecordToApproveReject(null);
+			// Reset approved books state when dialog closes
+			setApprovedBooks({});
 		}
 	};
 
@@ -207,16 +446,19 @@ export default function BorrowRecordsPage() {
 
 	const getStatusColor = (status: BorrowStatus) => {
 		const colors: Record<BorrowStatus, string> = {
+			pending_approval: 'bg-yellow-100 text-yellow-800',
 			borrowed: 'bg-blue-100 text-blue-800',
 			returned: 'bg-green-100 text-green-800',
 			overdue: 'bg-red-100 text-red-800',
-			renewed: 'bg-yellow-100 text-yellow-800',
+			renewed: 'bg-purple-100 text-purple-800',
 		};
 		return colors[status];
 	};
 
 	const getStatusIcon = (status: BorrowStatus) => {
 		switch (status) {
+			case 'pending_approval':
+				return <AlertTriangle className="h-4 w-4 text-yellow-600" />;
 			case 'borrowed':
 				return <BookOpen className="h-4 w-4 text-blue-600" />;
 			case 'returned':
@@ -224,10 +466,21 @@ export default function BorrowRecordsPage() {
 			case 'overdue':
 				return <AlertTriangle className="h-4 w-4 text-red-600" />;
 			case 'renewed':
-				return <Calendar className="h-4 w-4 text-yellow-600" />;
+				return <Calendar className="h-4 w-4 text-purple-600" />;
 			default:
 				return null;
 		}
+	};
+
+	const getStatusText = (status: BorrowStatus) => {
+		const texts: Record<BorrowStatus, string> = {
+			pending_approval: 'Chờ phê duyệt',
+			borrowed: 'Đang mượn',
+			returned: 'Đã trả',
+			overdue: 'Quá hạn',
+			renewed: 'Đã gia hạn',
+		};
+		return texts[status];
 	};
 
 	const formatDate = (dateString: string) => {
@@ -251,6 +504,42 @@ export default function BorrowRecordsPage() {
 		return diffDays > 0 ? diffDays : 0;
 	};
 
+	// Function to check if due date is within 3 days
+	const isDueWithin3Days = (dueDate: string) => {
+		const daysUntilDue = calculateDaysUntilDue(dueDate);
+		return daysUntilDue <= 3 && daysUntilDue > 0;
+	};
+
+	// Function to handle send notification
+	const handleSendNotification = (record: any) => {
+		const daysUntilDue = calculateDaysUntilDue(record.due_date);
+		const reminderData = {
+			daysBeforeDue: record.status === 'overdue' ? 0 : daysUntilDue,
+			customMessage:
+				record.status === 'overdue'
+					? 'Sách đã quá hạn trả, vui lòng trả sách sớm nhất có thể.'
+					: `Sách sắp đến hạn trả (còn ${daysUntilDue} ngày), vui lòng trả sách đúng hạn.`,
+			readerId: record.reader?.id || '',
+		};
+
+		sendReminders(reminderData);
+	};
+
+	// Check if a record should have approve button disabled
+	const shouldDisableApproveButton = (record: any) => {
+		const bookId = record.physicalCopy?.book?.id;
+		if (!bookId) return false;
+
+		// Disable if there are pending reservations OR if this book has been approved by someone else
+		// But don't disable for the current record being processed
+		const isCurrentRecord = record.id === recordToApproveReject?.id;
+		return (
+			(pendingReservationsByBook[bookId] || approvedBooks[bookId]) &&
+			!isCurrentRecord
+		);
+		// return status === 'available';
+	};
+
 	const renderBorrowRecordRow = (record: any) => {
 		return (
 			<TableRow key={record.id}>
@@ -269,12 +558,7 @@ export default function BorrowRecordsPage() {
 				<TableCell>
 					<Badge className={getStatusColor(record.status)}>
 						{getStatusIcon(record.status)}
-						<span className="ml-1">
-							{record.status === 'borrowed' && 'Đang mượn'}
-							{record.status === 'returned' && 'Đã trả'}
-							{record.status === 'overdue' && 'Quá hạn'}
-							{record.status === 'renewed' && 'Đã gia hạn'}
-						</span>
+						<span className="ml-1">{getStatusText(record.status)}</span>
 					</Badge>
 				</TableCell>
 				<TableCell>
@@ -305,6 +589,45 @@ export default function BorrowRecordsPage() {
 						>
 							<Eye className="h-4 w-4" />
 						</Button>
+
+						{/* Actions for pending approval */}
+						{record.status === 'pending_approval' &&
+							record.physicalCopy?.status === 'available' && (
+								<>
+									<Button
+										variant="ghost"
+										size="sm"
+										onClick={() => handleApproveRecord(record)}
+										title={
+											shouldDisableApproveButton(record)
+												? approvedBooks[record.physicalCopy?.book?.id]
+													? 'Không thể phê duyệt - sách đã được phê duyệt cho người khác'
+													: 'Không thể phê duyệt - có đặt trước chờ xử lý'
+												: 'Phê duyệt'
+										}
+										disabled={isApproving || shouldDisableApproveButton(record)}
+									>
+										<ThumbsUp
+											className={`h-4 w-4 ${
+												shouldDisableApproveButton(record)
+													? 'text-gray-400'
+													: 'text-green-600'
+											}`}
+										/>
+									</Button>
+									{/* <Button
+										variant="ghost"
+										size="sm"
+										onClick={() => handleRejectRecord(record)}
+										title="Từ chối"
+										disabled={isRejecting}
+									>
+										<ThumbsDown className="h-4 w-4 text-red-600" />
+									</Button> */}
+								</>
+							)}
+
+						{/* Actions for borrowed books */}
 						{record.status === 'borrowed' && (
 							<>
 								<Button
@@ -312,7 +635,7 @@ export default function BorrowRecordsPage() {
 									size="sm"
 									onClick={() => openReturnDialog(record)}
 									title="Trả sách"
-									disabled={returnBookMutation.isPending}
+									disabled={isReturning}
 								>
 									<CheckCircle className="h-4 w-4 text-green-600" />
 								</Button>
@@ -321,25 +644,115 @@ export default function BorrowRecordsPage() {
 									size="sm"
 									onClick={() => openRenewDialog(record)}
 									title="Gia hạn"
-									disabled={renewBookMutation.isPending}
+									disabled={isRenewing}
 								>
 									<Calendar className="h-4 w-4 text-blue-600" />
 								</Button>
+								{/* Notification button for books due within 3 days */}
+								{isDueWithin3Days(record.due_date) && (
+									<Button
+										variant="ghost"
+										size="sm"
+										onClick={() => handleSendNotification(record)}
+										title="Gửi thông báo nhắc nhở"
+										className="text-orange-600 hover:text-orange-700"
+										disabled={isSendingReminders}
+									>
+										<Bell className="h-4 w-4" />
+									</Button>
+								)}
 							</>
 						)}
-						<Button
+
+						{/* Actions for overdue books */}
+						{record.status === 'overdue' && (
+							<>
+								<Button
+									variant="ghost"
+									size="sm"
+									onClick={() => openReturnDialog(record)}
+									title="Trả sách"
+									disabled={isReturning}
+								>
+									<CheckCircle className="h-4 w-4 text-green-600" />
+								</Button>
+								<Button
+									variant="ghost"
+									size="sm"
+									onClick={() => openRenewDialog(record)}
+									title="Gia hạn"
+									disabled={isRenewing}
+								>
+									<Calendar className="h-4 w-4 text-blue-600" />
+								</Button>
+								{/* Notification button for overdue books */}
+								<Button
+									variant="ghost"
+									size="sm"
+									onClick={() => handleSendNotification(record)}
+									title="Gửi thông báo nhắc nhở (Quá hạn)"
+									className="text-red-600 hover:text-red-700"
+									disabled={isSendingReminders}
+								>
+									<Bell className="h-4 w-4" />
+								</Button>
+							</>
+						)}
+
+						{/* đã gia hạn cũng sẽ có nút trả sách */}
+						{record.status === 'renewed' && (
+							<>
+								<Button
+									variant="ghost"
+									size="sm"
+									onClick={() => openReturnDialog(record)}
+									title="Trả sách"
+									disabled={isReturning}
+								>
+									<CheckCircle className="h-4 w-4 text-green-600" />
+								</Button>
+
+								{/* {isDueWithin3Days(record.due_date) && (
+									<Button
+										variant="ghost"
+										size="sm"
+										onClick={() => handleSendNotification(record)}
+										title="Gửi thông báo nhắc nhở"
+										className="text-orange-600 hover:text-orange-700"
+										disabled={isSendingReminders}
+									>
+										<Bell className="h-4 w-4" />
+									</Button>
+								)} */}
+							</>
+						)}
+
+						{/* <Button
 							variant="ghost"
 							size="sm"
 							onClick={() => handleDeleteRecord(record)}
 							title="Xóa giao dịch"
-							disabled={deleteBorrowRecordMutation.isPending}
+							disabled={isDeleting}
+							className={cn({
+								hidden:
+									record.status === 'borrowed',
+							})}
 						>
 							<Trash2 className="h-4 w-4 text-red-600" />
-						</Button>
+						</Button> */}
 					</div>
 				</TableCell>
 			</TableRow>
 		);
+	};
+
+	const handleSelectedTab = (value: string) => {
+		navigate({
+			pathname: '/borrow-records',
+			search: createSearchParams({
+				status: value,
+			}).toString(),
+		});
 	};
 
 	return (
@@ -359,97 +772,49 @@ export default function BorrowRecordsPage() {
 			</div>
 
 			{/* Statistics Cards */}
-			<div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-				<Card>
-					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-						<CardTitle className="text-sm font-medium">
-							Tổng số Giao dịch
-						</CardTitle>
-						<BookOpen className="h-4 w-4 text-muted-foreground" />
-					</CardHeader>
-					<CardContent>
-						<div className="text-2xl font-bold">{stats?.total || 0}</div>
-					</CardContent>
-				</Card>
-				<Card>
-					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-						<CardTitle className="text-sm font-medium">Đang mượn</CardTitle>
-						<BookOpen className="h-4 w-4 text-muted-foreground" />
-					</CardHeader>
-					<CardContent>
-						<div className="text-2xl font-bold text-blue-600">
-							{stats?.borrowed || 0}
-						</div>
-					</CardContent>
-				</Card>
-				<Card>
-					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-						<CardTitle className="text-sm font-medium">Đã trả</CardTitle>
-						<CheckCircle className="h-4 w-4 text-muted-foreground" />
-					</CardHeader>
-					<CardContent>
-						<div className="text-2xl font-bold text-green-600">
-							{stats?.returned || 0}
-						</div>
-					</CardContent>
-				</Card>
-				<Card>
-					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-						<CardTitle className="text-sm font-medium">Quá hạn</CardTitle>
-						<AlertTriangle className="h-4 w-4 text-muted-foreground" />
-					</CardHeader>
-					<CardContent>
-						<div className="text-2xl font-bold text-red-600">
-							{stats?.overdue || 0}
-						</div>
-					</CardContent>
-				</Card>
-			</div>
+			<StatisticsCards stats={stats || null} isLoading={false} />
 
 			{/* Main Content */}
 			<Tabs
-				value={activeTab}
-				onValueChange={setActiveTab}
+				value={status}
+				onValueChange={handleSelectedTab}
 				className="space-y-4"
 			>
 				<TabsList>
-					<TabsTrigger value="all">Tất cả Giao dịch</TabsTrigger>
-					<TabsTrigger value="overdue">Quá hạn</TabsTrigger>
-					<TabsTrigger value="due-soon">Sắp đến hạn</TabsTrigger>
+					{/* <TabsTrigger value="all">
+						Tất cả Giao dịch
+						{meta && (
+							<Badge variant="secondary" className="ml-2">
+								{meta.totalItems || 0}
+							</Badge>
+						)}
+					</TabsTrigger> */}
+					<TabsTrigger value="pending_approval">
+						Chờ phê duyệt
+						{statusMeta && status === 'pending_approval' && (
+							<Badge variant="secondary" className="ml-2">
+								{statusMeta.totalItems || 0}
+							</Badge>
+						)}
+					</TabsTrigger>
+					<TabsTrigger value="borrowed">Đang mượn</TabsTrigger>
+					<TabsTrigger value="returned">Đã trả</TabsTrigger>
+					<TabsTrigger value="renewed">Đã gia hạn</TabsTrigger>
+					<TabsTrigger value="overdue">
+						Quá hạn
+						{/* {overdueMeta && (
+							<Badge variant="secondary" className="ml-2">
+								{overdueMeta.totalItems || 0}
+							</Badge>
+						)} */}
+					</TabsTrigger>
 				</TabsList>
 
-				{/* Search and Filter */}
-				<div className="flex gap-4">
-					<div className="flex-1">
-						<div className="relative">
-							<Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-							<Input
-								placeholder="Tìm kiếm giao dịch..."
-								value={searchQuery}
-								onChange={(e) => handleSearch(e.target.value)}
-								className="pl-8"
-							/>
-						</div>
-					</div>
-					<Select value={selectedStatus} onValueChange={handleStatusFilter}>
-						<SelectTrigger className="w-[180px]">
-							<SelectValue placeholder="Trạng thái" />
-						</SelectTrigger>
-						<SelectContent>
-							<SelectItem value="all">Tất cả trạng thái</SelectItem>
-							<SelectItem value="borrowed">Đang mượn</SelectItem>
-							<SelectItem value="returned">Đã trả</SelectItem>
-							<SelectItem value="overdue">Quá hạn</SelectItem>
-							<SelectItem value="renewed">Đã gia hạn</SelectItem>
-						</SelectContent>
-					</Select>
-				</div>
-
-				{/* Borrow Records List */}
-				<TabsContent value="all" className="space-y-4">
-					{isLoadingBorrowRecords ? (
+				{/* Tab Content */}
+				<TabsContent value={status} className="space-y-4">
+					{isLoading ? (
 						<div className="text-center py-8">Đang tải...</div>
-					) : borrowRecordsData?.data.length === 0 ? (
+					) : statusRecords.length === 0 ? (
 						<div className="text-center py-8 text-muted-foreground">
 							Không có giao dịch mượn sách nào
 						</div>
@@ -469,48 +834,11 @@ export default function BorrowRecordsPage() {
 									</TableRow>
 								</TableHeader>
 								<TableBody>
-									{borrowRecordsData?.data.map((record) =>
-										renderBorrowRecordRow(record)
-									)}
+									{statusRecords.map((record) => renderBorrowRecordRow(record))}
 								</TableBody>
 							</Table>
 						</div>
 					)}
-				</TabsContent>
-
-				<TabsContent value="overdue" className="space-y-4">
-					{overdueRecords?.data.length === 0 ? (
-						<div className="text-center py-8 text-muted-foreground">
-							Không có sách quá hạn
-						</div>
-					) : (
-						<div className="overflow-x-auto">
-							<Table>
-								<TableHeader>
-									<TableRow>
-										<TableHead>Sách</TableHead>
-										<TableHead>Độc giả</TableHead>
-										<TableHead>Ngày mượn</TableHead>
-										<TableHead>Hạn trả</TableHead>
-										<TableHead>Trạng thái</TableHead>
-										<TableHead>Thời gian</TableHead>
-										<TableHead>Hành động</TableHead>
-									</TableRow>
-								</TableHeader>
-								<TableBody>
-									{overdueRecords?.data.map((record) =>
-										renderBorrowRecordRow(record)
-									)}
-								</TableBody>
-							</Table>
-						</div>
-					)}
-				</TabsContent>
-
-				<TabsContent value="due-soon" className="space-y-4">
-					<div className="text-center py-8 text-muted-foreground">
-						Tính năng này chưa được triển khai
-					</div>
 				</TabsContent>
 			</Tabs>
 
@@ -519,30 +847,28 @@ export default function BorrowRecordsPage() {
 				open={showCreateDialog}
 				onOpenChange={setShowCreateDialog}
 				onSubmit={handleCreateBorrowRecord}
-				isLoading={createBorrowRecordMutation.isPending}
+				isLoading={isCreating}
 			/>
 
 			{/* Return Book Dialog */}
 			<ReturnBookDialog
 				open={showReturnDialog}
 				onOpenChange={handleReturnDialogClose}
-				recordId={recordToReturn?.id || ''}
 				bookTitle={recordToReturn?.physicalCopy?.book?.title}
 				readerName={recordToReturn?.reader?.fullName}
 				onSubmit={handleReturnBook}
-				isLoading={returnBookMutation.isPending}
+				isLoading={isReturning}
 			/>
 
 			{/* Renew Book Dialog */}
 			<RenewBookDialog
 				open={showRenewDialog}
 				onOpenChange={handleRenewDialogClose}
-				recordId={recordToRenew?.id || ''}
 				bookTitle={recordToRenew?.physicalCopy?.book?.title}
 				readerName={recordToRenew?.reader?.fullName}
 				currentDueDate={recordToRenew?.due_date}
 				onSubmit={handleRenewBook}
-				isLoading={renewBookMutation.isPending}
+				isLoading={isRenewing}
 			/>
 
 			{/* Delete Confirm Dialog */}
@@ -550,9 +876,20 @@ export default function BorrowRecordsPage() {
 				open={showDeleteDialog}
 				onOpenChange={setShowDeleteDialog}
 				onConfirm={confirmDelete}
-				isLoading={deleteBorrowRecordMutation.isPending}
+				isLoading={isDeleting}
 				recordTitle={recordToDelete?.physicalCopy?.book?.title}
 				readerName={recordToDelete?.reader?.fullName}
+			/>
+
+			{/* Approve/Reject Dialog */}
+			<ApproveRejectDialog
+				open={showApproveRejectDialog}
+				onOpenChange={handleApproveRejectDialogClose}
+				bookTitle={recordToApproveReject?.physicalCopy?.book?.title}
+				readerName={recordToApproveReject?.reader?.fullName}
+				action={approveRejectAction}
+				onSubmit={handleApproveRejectSubmit}
+				isLoading={isApproving || isRejecting}
 			/>
 
 			{/* Record Details Dialog - Placeholder */}
@@ -583,7 +920,8 @@ export default function BorrowRecordsPage() {
 								<strong>Hạn trả:</strong> {formatDate(selectedRecord.due_date)}
 							</p>
 							<p>
-								<strong>Trạng thái:</strong> {selectedRecord.status}
+								<strong>Trạng thái:</strong>{' '}
+								{getStatusText(selectedRecord.status)}
 							</p>
 							{selectedRecord.return_date && (
 								<p>

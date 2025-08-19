@@ -21,9 +21,11 @@ Module Quản lý Độc Giả cung cấp các API để quản lý thông tin �
 ## 📋 Danh sách API Endpoints
 
 ### 1. Tạo Hồ Sơ Độc Giả Mới
+
 ```http
 POST /readers
 ```
+
 - **Mô tả**: Tạo hồ sơ độc giả mới trong hệ thống
 - **Body**: CreateReaderDto
 - **Response**: 201 - Thông tin độc giả đã tạo
@@ -32,19 +34,31 @@ POST /readers
   - 409: Người dùng đã có hồ sơ độc giả hoặc số thẻ đã tồn tại
 
 ### 2. Lấy Danh Sách Độc Giả
+
 ```http
 GET /readers
 ```
-- **Mô tả**: Lấy danh sách độc giả có phân trang
+
+- **Mô tả**: Lấy danh sách độc giả có phân trang và lọc theo các tiêu chí
 - **Query Parameters**:
   - page: Số trang (mặc định: 1)
   - limit: Số lượng mỗi trang (mặc định: 10)
+  - cardNumber: Lọc theo số thẻ thư viện (tìm kiếm mờ)
+  - cardExpiryDateFrom: Lọc theo ngày hết hạn thẻ (từ ngày) - format: YYYY-MM-DD
+  - cardExpiryDateTo: Lọc theo ngày hết hạn thẻ (đến ngày) - format: YYYY-MM-DD
+  - phone: Lọc theo số điện thoại (tìm kiếm mờ)
 - **Response**: 200 - Danh sách độc giả và thông tin phân trang
+- **Ví dụ**:
+  ```
+  GET /readers?page=1&limit=10&cardNumber=LIB2024&phone=0123&cardExpiryDateFrom=2024-01-01&cardExpiryDateTo=2025-12-31
+  ```
 
 ### 3. Tìm Kiếm Độc Giả
+
 ```http
 GET /readers/search
 ```
+
 - **Mô tả**: Tìm kiếm độc giả theo nhiều tiêu chí
 - **Query Parameters**:
   - q: Từ khóa tìm kiếm (tên, số thẻ, SĐT, username, email)
@@ -53,17 +67,21 @@ GET /readers/search
 - **Response**: 200 - Kết quả tìm kiếm có phân trang
 
 ### 4. Lấy Danh Sách Thẻ Hết Hạn
+
 ```http
 GET /readers/expired-cards
 ```
+
 - **Mô tả**: Lấy danh sách độc giả có thẻ đã hết hạn
 - **Query Parameters**: Hỗ trợ phân trang
 - **Response**: 200 - Danh sách thẻ hết hạn
 
 ### 5. Lấy Danh Sách Thẻ Sắp Hết Hạn
+
 ```http
 GET /readers/expiring-soon
 ```
+
 - **Mô tả**: Lấy danh sách độc giả có thẻ sắp hết hạn
 - **Query Parameters**:
   - days: Số ngày kiểm tra trước (mặc định: 30)
@@ -71,16 +89,20 @@ GET /readers/expiring-soon
 - **Response**: 200 - Danh sách thẻ sắp hết hạn
 
 ### 6. Tạo Số Thẻ Mới
+
 ```http
 GET /readers/generate-card-number
 ```
+
 - **Mô tả**: Tạo số thẻ thư viện mới tự động
 - **Response**: 200 - Số thẻ đã tạo
 
 ### 7. Lấy Độc Giả Theo Loại
+
 ```http
 GET /readers/type/:readerTypeId
 ```
+
 - **Mô tả**: Lấy danh sách độc giả theo loại độc giả
 - **Parameters**:
   - readerTypeId: UUID của loại độc giả
@@ -88,19 +110,23 @@ GET /readers/type/:readerTypeId
 - **Response**: 200 - Danh sách độc giả theo loại
 
 ### 8. Lấy Thông Tin Độc Giả
+
 ```http
 GET /readers/:id
 GET /readers/user/:userId
 GET /readers/card/:cardNumber
 ```
+
 - **Mô tả**: Lấy thông tin chi tiết độc giả theo ID/UserID/Số thẻ
 - **Response**: 200 - Thông tin chi tiết độc giả
 - **Lỗi**: 404 - Không tìm thấy độc giả
 
 ### 9. Cập Nhật Thông Tin Độc Giả
+
 ```http
 PATCH /readers/:id
 ```
+
 - **Mô tả**: Cập nhật thông tin độc giả
 - **Body**: UpdateReaderDto
 - **Response**: 200 - Thông tin độc giả đã cập nhật
@@ -109,24 +135,28 @@ PATCH /readers/:id
   - 400: Dữ liệu không hợp lệ
 
 ### 10. Quản Lý Trạng Thái Thẻ
+
 ```http
 PATCH /readers/:id/activate
 PATCH /readers/:id/deactivate
 ```
+
 - **Mô tả**: Kích hoạt/Vô hiệu hóa thẻ độc giả
 - **Response**: 200 - Thông tin độc giả sau khi cập nhật
 - **Lỗi**: 404 - Không tìm thấy độc giả
 
 ### 11. Kiểm Tra và Gia Hạn Thẻ
+
 ```http
 GET /readers/:id/check-expiry
 PATCH /readers/:id/renew-card
 ```
+
 - **Mô tả**: Kiểm tra hạn thẻ và gia hạn thẻ độc giả
 - **Body** (cho renew-card):
   ```json
   {
-    "newExpiryDate": "YYYY-MM-DD"
+  	"newExpiryDate": "YYYY-MM-DD"
   }
   ```
 - **Response**: 200 - Kết quả kiểm tra hoặc thông tin sau gia hạn
@@ -135,9 +165,11 @@ PATCH /readers/:id/renew-card
   - 400: Ngày hết hạn không hợp lệ
 
 ### 12. Xóa Hồ Sơ Độc Giả
+
 ```http
 DELETE /readers/:id
 ```
+
 - **Mô tả**: Xóa hồ sơ độc giả khỏi hệ thống
 - **Response**: 204 - Xóa thành công
 - **Lỗi**: 404 - Không tìm thấy độc giả
@@ -145,6 +177,7 @@ DELETE /readers/:id
 ## 📝 Validation Rules
 
 ### CreateReaderDto
+
 - **fullName**: Bắt buộc, chuỗi, tối đa 255 ký tự
 - **dateOfBirth**: Bắt buộc, định dạng YYYY-MM-DD
 - **gender**: Bắt buộc, một trong ['male', 'female', 'other']
@@ -156,7 +189,15 @@ DELETE /readers/:id
 - **cardIssueDate**: Mặc định ngày hiện tại
 - **cardExpiryDate**: Bắt buộc, phải sau ngày cấp
 
+### FilterReadersDto
+
+- **cardNumber**: Tùy chọn, chuỗi - lọc theo số thẻ thư viện (tìm kiếm mờ)
+- **cardExpiryDateFrom**: Tùy chọn, định dạng YYYY-MM-DD - lọc theo ngày hết hạn thẻ (từ ngày)
+- **cardExpiryDateTo**: Tùy chọn, định dạng YYYY-MM-DD - lọc theo ngày hết hạn thẻ (đến ngày)
+- **phone**: Tùy chọn, chuỗi - lọc theo số điện thoại (tìm kiếm mờ)
+
 ### UpdateReaderDto
+
 - Tất cả trường là không bắt buộc
 - Các quy tắc validation giống CreateReaderDto
 - Không cho phép cập nhật userId
@@ -164,16 +205,25 @@ DELETE /readers/:id
 ## 🎯 Business Rules
 
 1. **Tạo Độc Giả**
+
    - Mỗi user chỉ có thể có một hồ sơ độc giả
    - Số thẻ thư viện phải là duy nhất
    - Thẻ mới tạo mặc định có trạng thái active
 
 2. **Quản Lý Thẻ**
+
    - Thẻ hết hạn không thể mượn sách
    - Thẻ bị vô hiệu hóa không thể mượn sách
    - Gia hạn thẻ phải có ngày hết hạn mới hợp lệ
 
-3. **Xóa Độc Giả**
+3. **Lọc và Tìm Kiếm**
+
+   - Hỗ trợ tìm kiếm mờ cho số thẻ và số điện thoại
+   - Lọc theo khoảng thời gian hết hạn thẻ
+   - Có thể kết hợp nhiều điều kiện lọc cùng lúc
+   - Tất cả tham số lọc đều là tùy chọn
+
+4. **Xóa Độc Giả**
    - Chỉ có thể xóa độc giả không có sách đang mượn
    - Xóa độc giả không xóa tài khoản user tương ứng
 

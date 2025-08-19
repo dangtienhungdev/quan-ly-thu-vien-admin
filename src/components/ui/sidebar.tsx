@@ -16,14 +16,14 @@ import {
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { PanelLeftIcon } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useIsMobile } from '@/hooks/common/use-mobile';
+import { cn } from '@/lib/utils';
 import { Slot } from '@radix-ui/react-slot';
 import type { VariantProps } from 'class-variance-authority';
-import { cn } from '@/lib/utils';
 import { cva } from 'class-variance-authority';
-import { useIsMobile } from '@/hooks';
+import { PanelLeftIcon } from 'lucide-react';
 
 const SIDEBAR_COOKIE_NAME = 'sidebar_state';
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;

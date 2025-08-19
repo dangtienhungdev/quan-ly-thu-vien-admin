@@ -1,6 +1,11 @@
 import type { PaginationQuery } from './common';
 
-export type PaginationReaderQuery = PaginationQuery;
+export type PaginationReaderQuery = PaginationQuery & {
+	cardNumber?: string;
+	cardExpiryDateFrom?: string; // YYYY-MM-DD format
+	cardExpiryDateTo?: string; // YYYY-MM-DD format
+	phone?: string;
+};
 
 export type Reader = {
 	id: string;
@@ -50,6 +55,7 @@ export type UpdateReaderRequest = {
 	address?: string;
 	phone?: string;
 	readerTypeId?: string;
+	cardIssueDate?: string;
 	cardExpiryDate?: string;
 };
 
@@ -62,6 +68,7 @@ export type ExpiringSoonQuery = PaginationQuery & {
 };
 
 export type RenewCardRequest = {
+	newIssueDate?: string;
 	newExpiryDate: string;
 };
 

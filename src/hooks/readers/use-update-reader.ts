@@ -22,8 +22,10 @@ export const useUpdateReader = (options: UseUpdateReaderOptions = {}) => {
 			queryClient.invalidateQueries({ queryKey: ['expired-cards'] });
 			queryClient.invalidateQueries({ queryKey: ['expiring-soon'] });
 
-			// Hiển thị toast thành công
-			toast.success(`Cập nhật độc giả ${data.fullName} thành công!`);
+			// Hiển thị toast thành công (chỉ khi không có callback onSuccess)
+			if (!onSuccess) {
+				toast.success(`Cập nhật độc giả ${data.fullName} thành công!`);
+			}
 
 			// Gọi callback onSuccess nếu có
 			onSuccess?.(data);

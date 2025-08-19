@@ -28,8 +28,8 @@ instance.interceptors.response.use(
 		// Xử lý lỗi toàn cục (ví dụ: thông báo, redirect, ...)
 		if (error.response && error.response.status === 401) {
 			// Ví dụ: logout hoặc chuyển hướng
-			// localStorage.removeItem('accessToken');
-			// window.location.href = '/login';
+			localStorage.removeItem('accessToken');
+			window.location.href = '/login';
 		}
 		return Promise.reject(new Error(error?.message || 'Response error'));
 	}

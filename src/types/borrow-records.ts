@@ -1,6 +1,11 @@
 import type { BaseEntity, PaginatedResponse } from './common';
 
-export type BorrowStatus = 'borrowed' | 'returned' | 'overdue' | 'renewed';
+export type BorrowStatus =
+	| 'pending_approval'
+	| 'borrowed'
+	| 'returned'
+	| 'overdue'
+	| 'renewed';
 
 export interface BorrowRecord extends BaseEntity {
 	reader_id: string;
@@ -142,6 +147,9 @@ export interface UpdateBorrowRecordRequest {
 	return_date?: string;
 	status?: BorrowStatus;
 	librarian_id?: string;
+	borrow_notes?: string;
+	return_notes?: string;
+	renewal_count?: number;
 }
 
 export interface ReturnBookRequest {
@@ -150,6 +158,16 @@ export interface ReturnBookRequest {
 
 export interface RenewBookRequest {
 	newDueDate: string;
+}
+
+export interface ApproveBorrowRequest {
+	librarianId: string;
+	notes?: string;
+}
+
+export interface RejectBorrowRequest {
+	librarianId: string;
+	reason: string;
 }
 
 export interface BorrowRecordSearchQuery {
@@ -194,12 +212,18 @@ export interface BorrowRecordOverdueQuery {
 	limit?: number;
 }
 
+export interface BorrowRecordPendingApprovalQuery {
+	page?: number;
+	limit?: number;
+}
+
 export interface BorrowRecordStats {
 	total: number;
 	borrowed: number;
 	returned: number;
 	overdue: number;
 	renewed: number;
+	pending_approval: number;
 	byStatus: Array<{
 		status: BorrowStatus;
 		count: number;
@@ -229,3 +253,25 @@ export interface BorrowRecordStats {
 export type BorrowRecordsResponse = PaginatedResponse<BorrowRecord>;
 export type BorrowRecordResponse = BorrowRecord;
 export type BorrowRecordStatsResponse = BorrowRecordStats;
+
+export interface SendRemindersRequest {
+	daysBeforeDue: number;
+	customMessage: string;
+	readerId: string;
+}
+
+export interface SendRemindersResponse {
+	success: boolean;
+	message: string;
+	totalReaders: number;
+	notificationsSent: number;
+	details: [
+		{
+			readerId: string;
+			readerName: string;
+			bookTitle: string;
+			dueDate: string;
+			daysUntilDue: number;
+		}
+	];
+}

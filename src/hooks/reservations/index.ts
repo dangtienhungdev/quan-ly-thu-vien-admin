@@ -1,7 +1,9 @@
 export { useCancelReservation } from './use-cancel-reservation';
+export { useCreateBulkReservations } from './use-create-bulk-reservations';
 export { useCreateReservation } from './use-create-reservation';
 export { useDeleteReservation } from './use-delete-reservation';
 export { useFulfillReservation } from './use-fulfill-reservation';
+export { usePendingReservationsByBook } from './use-pending-reservations-by-book';
 export { useReservationById } from './use-reservation-by-id';
 export { useReservationStats } from './use-reservation-stats';
 export { useReservations } from './use-reservations';
