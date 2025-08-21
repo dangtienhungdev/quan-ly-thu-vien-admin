@@ -33,6 +33,7 @@ clsx: ^2.1.1
 cmdk: ^1.1.1
 date-fns: ^4.1.0
 js-cookie: ^3.0.5
+lodash: ^4.17.21
 lucide-react: ^0.525.0
 next-themes: ^0.4.6
 react: ^19.1.0
@@ -40,6 +41,7 @@ react-day-picker: ^9.8.0
 react-dom: ^19.1.0
 react-hook-form: ^7.60.0
 react-router-dom: ^7.7.0
+react-top-loading-bar: ^3.0.2
 recharts: ^3.1.0
 sonner: ^2.0.6
 tailwind-merge: ^3.3.1
@@ -52,6 +54,7 @@ zod: ^4.0.5
 ```
 @eslint/js: ^9.30.1
 @types/js-cookie: ^3.0.6
+@types/lodash: ^4.17.20
 @types/node: ^24.0.15
 @types/react: ^19.1.8
 @types/react-dom: ^19.1.6
@@ -79,19 +82,48 @@ src/
 ├── App.tsx
 ├── index.css
 ├── main.tsx
+├── readme.md
 ├── routes.tsx
 ├── vite-env.d.ts
+├── apis/
+│   ├── README.md
+│   ├── auth.ts
+│   ├── authors.ts
+│   ├── book-categories.ts
+│   ├── book-grade-levels.ts
+│   ├── books.ts
+│   ├── borrow-records.ts
+│   ├── categories.ts
+│   ├── dashboard.ts
+│   ├── ebooks.ts
+│   ├── fines.ts
+│   ├── grade-levels.ts
+│   ├── images.ts
+│   ├── index.ts
+│   ├── physical-copies.ts
+│   ├── publishers.ts
+│   ├── reader-types.ts
+│   ├── readers.ts
+│   ├── renewals.ts
+│   ├── reservations.ts
+│   ├── uploads.ts
+│   └── users.ts
 ├── assets/
 │   └── react.svg
 ├── components/
+│   ├── book-cover.tsx
 │   ├── coming-soon.tsx
 │   ├── command-menu.tsx
 │   ├── confirm-dialog.tsx
+│   ├── index.ts
 │   ├── learn-more.tsx
 │   ├── long-text.tsx
 │   ├── navigation-progress.tsx
+│   ├── pagination-wrapper.tsx
 │   ├── password-input.tsx
+│   ├── private-route.tsx
 │   ├── profile-dropdown.tsx
+│   ├── public-route.tsx
 │   ├── search.tsx
 │   ├── select-dropdown.tsx
 │   ├── skip-to-main.tsx
@@ -107,12 +139,14 @@ src/
 │       ├── checkbox.tsx
 │       ├── collapsible.tsx
 │       ├── command.tsx
+│       ├── data-table.tsx
 │       ├── dialog.tsx
 │       ├── dropdown-menu.tsx
 │       ├── form.tsx
 │       ├── input-otp.tsx
 │       ├── input.tsx
 │       ├── label.tsx
+│       ├── pagination.tsx
 │       ├── popover.tsx
 │       ├── radio-group.tsx
 │       ├── scroll-area.tsx
@@ -130,30 +164,87 @@ src/
 ├── configs/
 │   └── instances.ts
 ├── context/
+│   ├── README.md
+│   ├── auth-context.tsx
 │   ├── font-context.tsx
 │   ├── search-context.tsx
 │   └── theme-context.tsx
 ├── hooks/
-│   └── use-mobile.ts
+│   ├── index.ts
+│   ├── auth/
+│   ├── authors/
+│   ├── book-categories/
+│   ├── book-grade-levels/
+│   ├── books/
+│   ├── borrow-records/
+│   ├── categories/
+│   ├── common/
+│   ├── grade-levels/
+│   ├── images/
+│   ├── physical-copies/
+│   ├── publishers/
+│   ├── reader-types/
+│   ├── readers/
+│   ├── renewals/
+│   ├── reservations/
+│   ├── uploads/
+│   └── users/
 ├── layout/
 │   ├── app-sidebar.tsx
 │   ├── authenticated-layout.tsx
+│   ├── data/
+│   │   └── sidebar-data.ts
 │   ├── header.tsx
 │   ├── main.tsx
 │   ├── nav-group.tsx
 │   ├── nav-user.tsx
 │   ├── team-switcher.tsx
 │   ├── top-nav.tsx
-│   ├── types.ts
-│   └── data/
-│       └── sidebar-data.ts
+│   └── types.ts
 ├── lib/
 │   └── utils.ts
-└── pages/
-    ├── dashboard/
-    │   └── page.tsx
-    └── login/
-        └── page.tsx
+├── pages/
+│   ├── authors/
+│   ├── book-categories/
+│   ├── books/
+│   ├── borrow-records/
+│   ├── categories/
+│   ├── dashboard/
+│   ├── ebooks/
+│   ├── fines/
+│   ├── grade-levels/
+│   ├── login/
+│   ├── not-found.tsx
+│   ├── physical-books/
+│   ├── physical-copies/
+│   ├── publishers/
+│   ├── reader-types/
+│   ├── readers/
+│   ├── renewals/
+│   ├── reservations/
+│   └── users/
+└── types/
+    ├── auth.ts
+    ├── authors.ts
+    ├── book-categories.ts
+    ├── book-grade-levels.ts
+    ├── books.ts
+    ├── borrow-records.ts
+    ├── categories.ts
+    ├── common.ts
+    ├── dashboard.ts
+    ├── ebooks.ts
+    ├── fines.ts
+    ├── grade-levels.ts
+    ├── index.ts
+    ├── physical-copies.ts
+    ├── publishers.ts
+    ├── reader-types.ts
+    ├── readers.ts
+    ├── renewals.ts
+    ├── reservations.ts
+    ├── uploads.ts
+    └── user.type.ts
 ```
 
 > File này mô tả cấu trúc thư mục `src`, các package sử dụng và các thiết lập kỹ thuật quan trọng trong dự án để dễ dàng tham khảo và phát triển.

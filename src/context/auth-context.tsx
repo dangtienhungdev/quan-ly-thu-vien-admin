@@ -1,7 +1,6 @@
 import type { LoginRequest, User } from '@/types/auth';
 import React, { createContext, useContext, useState } from 'react';
 
-import { AuthAPI } from '@/apis/auth';
 import { UsersAPI } from '@/apis/users';
 import { useLogin } from '@/hooks';
 import { useNavigate } from 'react-router-dom';
@@ -60,8 +59,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 		// Clear user state
 		setUser(null);
 
-		// Clear token from localStorage
-		AuthAPI.logout();
+		// Clear all data from localStorage
+		localStorage.clear();
 
 		// Navigate to login page
 		navigate('/login');

@@ -23,6 +23,7 @@ import {
 	Sparkles,
 } from 'lucide-react';
 
+import { useAuth } from '@/context/auth-context';
 import { Link } from 'react-router-dom';
 
 export function NavUser({
@@ -35,6 +36,14 @@ export function NavUser({
 	};
 }) {
 	const { isMobile } = useSidebar();
+	const { logout } = useAuth();
+
+	const handleLogout = () => {
+		console.log('🔄 Logout button clicked!');
+		// Gọi hàm logout từ AuthContext để xử lý tất cả logic logout
+		// Bao gồm: xóa tất cả dữ liệu trong localStorage, xóa user state, và navigate sang /login
+		logout();
+	};
 
 	return (
 		<SidebarMenu>
@@ -103,7 +112,10 @@ export function NavUser({
 							</DropdownMenuItem>
 						</DropdownMenuGroup>
 						<DropdownMenuSeparator />
-						<DropdownMenuItem>
+						<DropdownMenuItem
+							className="cursor-pointer"
+							onSelect={handleLogout}
+						>
 							<LogOut />
 							Log out
 						</DropdownMenuItem>
