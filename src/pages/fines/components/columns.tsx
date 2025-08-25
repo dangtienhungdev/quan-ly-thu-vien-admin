@@ -13,10 +13,10 @@ export const columns = (onPayFine: (fine: FineWithBorrowDetails) => void) => [
 				<User className="h-4 w-4 text-muted-foreground" />
 				<div>
 					<div className="font-medium">
-						{fine.borrow_record.reader.fullName}
+						{fine.borrow_record?.reader?.fullName || 'Không có thông tin'}
 					</div>
 					<div className="text-sm text-muted-foreground">
-						{fine.borrow_record.reader.card_number}
+						{fine.borrow_record?.reader?.card_number || 'Không có mã thẻ'}
 					</div>
 				</div>
 			</div>
@@ -30,10 +30,10 @@ export const columns = (onPayFine: (fine: FineWithBorrowDetails) => void) => [
 				<BookOpen className="h-4 w-4 text-muted-foreground" />
 				<div>
 					<div className="font-medium">
-						{fine.borrow_record.copy.book.title}
+						{fine.borrow_record?.copy?.book?.title || 'Không có tên sách'}
 					</div>
 					<div className="text-sm text-muted-foreground">
-						{fine.borrow_record.copy.book.isbn}
+						{fine.borrow_record?.copy?.book?.isbn || 'Không có ISBN'}
 					</div>
 				</div>
 			</div>

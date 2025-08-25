@@ -62,7 +62,6 @@ export default function ReservationsPage() {
 		limit: 20,
 		searchQuery: searchQuery || undefined,
 	});
-	console.log('🚀 ~ ReservationsPage ~ reservations:', reservations);
 
 	// Hook cho filter theo status
 	const {
@@ -99,12 +98,12 @@ export default function ReservationsPage() {
 	// Logic kiểm tra đặt trước quá hạn - chỉ check khi ở tab "all" hoặc "pending"
 	const hasExpiredReservations =
 		(currentStatus === 'all' || currentStatus === 'pending') &&
-		((statusStats?.expired || 0) > 0 ||
-			reservations.some(
-				(reservation) =>
-					reservation.status === 'pending' &&
-					new Date(reservation.expiry_date) < new Date()
-			));
+		(statusStats?.expired || 0) > 0 &&
+		reservations.some(
+			(reservation) =>
+				reservation.status === 'pending' &&
+				new Date(reservation.expiry_date) < new Date()
+		);
 
 	// Logic chặn thao tác khi còn đặt trước quá hạn
 	const isBlockedByExpiredReservations = hasExpiredReservations;
@@ -115,7 +114,7 @@ export default function ReservationsPage() {
 			toast.warning('🚨 CÓ ĐẶT TRƯỚC QUÁ HẠN!', {
 				description:
 					'Bạn phải hủy hết tất cả đặt trước quá hạn trước khi có thể thao tác với các đặt trước còn hạn.',
-				duration: Infinity,
+				duration: hasExpiredReservations ? Infinity : 5000,
 			});
 		}
 	}, [hasExpiredReservations]);
@@ -522,7 +521,6 @@ export default function ReservationsPage() {
 
 		setSelectedReservationId(reservation.id);
 		setShowDetailsDialog(true);
-		console.log('Xem chi tiết reservation:', reservation);
 	};
 
 	const handleViewDetailsExpiring = (
@@ -538,7 +536,6 @@ export default function ReservationsPage() {
 
 		setSelectedReservationId(reservation.id);
 		setShowDetailsDialog(true);
-		console.log('Xem chi tiết expiring reservation:', reservation);
 	};
 
 	const handleDeleteReservation = (reservation: Reservation) => {

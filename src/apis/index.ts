@@ -8,7 +8,7 @@ export { BorrowRecordsAPI } from './borrow-records';
 export { CategoriesAPI } from './categories';
 export { dashboardApi } from './dashboard';
 export { EBooksAPI } from './ebooks';
-export { finesApi } from './fines';
+export { FinesAPI } from './fines';
 export { GradeLevelsAPI } from './grade-levels';
 export { NotificationsAPI } from './notifications';
 export { PhysicalCopiesAPI } from './physical-copies';

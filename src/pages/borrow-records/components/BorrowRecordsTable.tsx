@@ -1,4 +1,15 @@
 import {
+	AlertTriangle,
+	Bell,
+	BookOpen,
+	Calendar,
+	CheckCircle,
+	Clock,
+	Eye,
+	Receipt,
+	ThumbsUp,
+} from 'lucide-react';
+import {
 	Table,
 	TableBody,
 	TableCell,
@@ -6,19 +17,10 @@ import {
 	TableHeader,
 	TableRow,
 } from '@/components/ui/table';
-import {
-	AlertTriangle,
-	Bell,
-	BookOpen,
-	Calendar,
-	CheckCircle,
-	Eye,
-	ThumbsUp,
-} from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import type { BorrowStatus } from '@/types/borrow-records';
+import { Button } from '@/components/ui/button';
 
 interface BorrowRecordsTableProps {
 	records: any[];
@@ -29,13 +31,18 @@ interface BorrowRecordsTableProps {
 	onRenew: (record: any) => void;
 	onSendNotification: (record: any) => void;
 	onDelete: (record: any) => void;
+	onUpdateOverdue: (record: any) => void;
+	onCreateFine: (record: any) => void;
 	isApproving: boolean;
 	isReturning: boolean;
 	isRenewing: boolean;
 	isSendingReminders: boolean;
 	isDeleting: boolean;
+	isUpdatingOverdue: boolean;
+	isCreatingFine: boolean;
 	shouldDisableApproveButton: (record: any) => boolean;
 	approvedBooks: Record<string, boolean>;
+	currentStatus: string; // Thêm prop để biết đang ở tab nào
 }
 
 export const BorrowRecordsTable: React.FC<BorrowRecordsTableProps> = ({
@@ -47,21 +54,27 @@ export const BorrowRecordsTable: React.FC<BorrowRecordsTableProps> = ({
 	onRenew,
 	onSendNotification,
 	onDelete,
+	onUpdateOverdue,
+	onCreateFine,
 	isApproving,
 	isReturning,
 	isRenewing,
 	isSendingReminders,
 	isDeleting,
+	isUpdatingOverdue,
+	isCreatingFine,
 	shouldDisableApproveButton,
 	approvedBooks,
+	currentStatus,
 }) => {
 	const getStatusColor = (status: BorrowStatus) => {
 		const colors: Record<BorrowStatus, string> = {
 			pending_approval: 'bg-yellow-100 text-yellow-800',
-			borrowed: 'bg-blue-100 text-blue-800',
+			borrowed: 'bg-green-100 text-green-800',
 			returned: 'bg-green-100 text-green-800',
 			overdue: 'bg-red-100 text-red-800',
 			renewed: 'bg-purple-100 text-purple-800',
+			cancelled: 'bg-gray-100 text-gray-800',
 		};
 		return colors[status];
 	};
@@ -71,13 +84,15 @@ export const BorrowRecordsTable: React.FC<BorrowRecordsTableProps> = ({
 			case 'pending_approval':
 				return <AlertTriangle className="h-4 w-4 text-yellow-600" />;
 			case 'borrowed':
-				return <BookOpen className="h-4 w-4 text-blue-600" />;
+				return <BookOpen className="h-4 w-4 text-green-600" />;
 			case 'returned':
 				return <CheckCircle className="h-4 w-4 text-green-600" />;
 			case 'overdue':
 				return <AlertTriangle className="h-4 w-4 text-red-600" />;
 			case 'renewed':
 				return <Calendar className="h-4 w-4 text-purple-600" />;
+			case 'cancelled':
+				return <AlertTriangle className="h-4 w-4 text-gray-600" />;
 			default:
 				return null;
 		}
@@ -90,6 +105,7 @@ export const BorrowRecordsTable: React.FC<BorrowRecordsTableProps> = ({
 			returned: 'Đã trả',
 			overdue: 'Quá hạn',
 			renewed: 'Đã gia hạn',
+			cancelled: 'Đã hủy',
 		};
 		return texts[status];
 	};
@@ -120,7 +136,28 @@ export const BorrowRecordsTable: React.FC<BorrowRecordsTableProps> = ({
 		return daysUntilDue <= 3 && daysUntilDue > 0;
 	};
 
+	// Kiểm tra xem record có bị quá hạn không
+	const isOverdue = (record: any) => {
+		if (!record.due_date) return false;
+		const due = new Date(record.due_date);
+		const today = new Date();
+		return today > due;
+	};
+
+	// Kiểm tra xem có nên disable các button khác khi quá hạn
+	const shouldDisableOtherActions = (record: any) => {
+		return record.status === 'borrowed' && isOverdue(record);
+	};
+
+	// Kiểm tra xem có nên hiển thị button gia hạn không (ẩn ở tab overview)
+	const shouldShowRenewButton = (record: any) => {
+		return currentStatus !== 'all' && record.status === 'borrowed';
+	};
+
 	const renderBorrowRecordRow = (record: any) => {
+		const isRecordOverdue = isOverdue(record);
+		const disableOtherActions = shouldDisableOtherActions(record);
+
 		return (
 			<TableRow key={record.id}>
 				<TableCell className="font-medium">
@@ -134,12 +171,24 @@ export const BorrowRecordsTable: React.FC<BorrowRecordsTableProps> = ({
 					</span>
 				</TableCell>
 				<TableCell>{formatDate(record.borrow_date)}</TableCell>
-				<TableCell>{formatDate(record.due_date)}</TableCell>
+				<TableCell>
+					<span className={isRecordOverdue ? 'text-red-600 font-medium' : ''}>
+						{formatDate(record.due_date)}
+					</span>
+				</TableCell>
 				<TableCell>
 					<Badge className={getStatusColor(record.status)}>
 						{getStatusIcon(record.status)}
 						<span className="ml-1">{getStatusText(record.status)}</span>
 					</Badge>
+					{/* Hiển thị cảnh báo quá hạn nếu cần */}
+					{isRecordOverdue && record.status === 'borrowed' && (
+						<div className="mt-1">
+							<Badge variant="destructive" className="text-xs">
+								⚠️ Cần cập nhật trạng thái thành "Quá hạn"
+							</Badge>
+						</div>
+					)}
 				</TableCell>
 				<TableCell>
 					{record.status === 'overdue' && (
@@ -148,8 +197,16 @@ export const BorrowRecordsTable: React.FC<BorrowRecordsTableProps> = ({
 						</span>
 					)}
 					{record.status === 'borrowed' && (
-						<span className="text-blue-600 font-medium">
-							{calculateDaysUntilDue(record.due_date)} ngày
+						<span
+							className={
+								isRecordOverdue
+									? 'text-red-600 font-medium'
+									: 'text-green-600 font-medium'
+							}
+						>
+							{isRecordOverdue
+								? `${calculateDaysOverdue(record.due_date)} ngày quá hạn`
+								: `${calculateDaysUntilDue(record.due_date)} ngày`}
 						</span>
 					)}
 					{record.status === 'returned' && record.return_date && (
@@ -201,32 +258,78 @@ export const BorrowRecordsTable: React.FC<BorrowRecordsTableProps> = ({
 						{/* Actions for borrowed books */}
 						{record.status === 'borrowed' && (
 							<>
+								{/* Button cập nhật trạng thái quá hạn */}
+								{isRecordOverdue && (
+									<Button
+										variant="ghost"
+										size="sm"
+										onClick={() => onUpdateOverdue(record)}
+										title="Cập nhật trạng thái thành quá hạn"
+										className="text-red-600 hover:text-red-700"
+										disabled={isUpdatingOverdue}
+									>
+										<Clock className="h-4 w-4" />
+									</Button>
+								)}
+
 								<Button
 									variant="ghost"
 									size="sm"
 									onClick={() => onReturn(record)}
 									title="Trả sách"
-									disabled={isReturning}
+									disabled={isReturning || disableOtherActions}
 								>
 									<CheckCircle className="h-4 w-4 text-green-600" />
 								</Button>
-								<Button
-									variant="ghost"
-									size="sm"
-									onClick={() => onRenew(record)}
-									title="Gia hạn"
-									disabled={isRenewing}
-								>
-									<Calendar className="h-4 w-4 text-blue-600" />
-								</Button>
+
+								{/* Button gia hạn - chỉ hiển thị khi không ở tab overview */}
+								{shouldShowRenewButton(record) && (
+									<Button
+										variant="ghost"
+										size="sm"
+										onClick={() => onRenew(record)}
+										title="Gia hạn"
+										disabled={isRenewing || disableOtherActions}
+									>
+										<Calendar className="h-4 w-4 text-blue-600" />
+									</Button>
+								)}
+
+								{/* Button tạo phiếu phạt - chỉ hiển thị ở tab overview */}
+								{currentStatus === 'all' && (
+									<Button
+										variant="ghost"
+										size="sm"
+										onClick={() => onCreateFine(record)}
+										title="Tạo phiếu phạt"
+										className="text-orange-600 hover:text-orange-700"
+										disabled={isCreatingFine}
+									>
+										<Receipt className="h-4 w-4" />
+									</Button>
+								)}
+
 								{/* Notification button for books due within 3 days */}
-								{isDueWithin3Days(record.due_date) && (
+								{isDueWithin3Days(record.due_date) && !isRecordOverdue && (
 									<Button
 										variant="ghost"
 										size="sm"
 										onClick={() => onSendNotification(record)}
 										title="Gửi thông báo nhắc nhở"
 										className="text-orange-600 hover:text-orange-700"
+										disabled={isSendingReminders}
+									>
+										<Bell className="h-4 w-4" />
+									</Button>
+								)}
+								{/* Notification button for overdue books */}
+								{isRecordOverdue && (
+									<Button
+										variant="ghost"
+										size="sm"
+										onClick={() => onSendNotification(record)}
+										title="Gửi thông báo nhắc nhở (Quá hạn)"
+										className="text-red-600 hover:text-red-700"
 										disabled={isSendingReminders}
 									>
 										<Bell className="h-4 w-4" />
@@ -256,6 +359,19 @@ export const BorrowRecordsTable: React.FC<BorrowRecordsTableProps> = ({
 								>
 									<Calendar className="h-4 w-4 text-blue-600" />
 								</Button>
+								{/* Button tạo phiếu phạt - chỉ hiển thị ở tab overdue */}
+								{currentStatus === 'overdue' && (
+									<Button
+										variant="ghost"
+										size="sm"
+										onClick={() => onCreateFine(record)}
+										title="Tạo phiếu phạt"
+										className="text-orange-600 hover:text-orange-700"
+										disabled={isCreatingFine}
+									>
+										<Receipt className="h-4 w-4" />
+									</Button>
+								)}
 								{/* Notification button for overdue books */}
 								<Button
 									variant="ghost"

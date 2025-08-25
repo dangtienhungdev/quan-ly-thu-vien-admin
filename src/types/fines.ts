@@ -1,26 +1,90 @@
-export interface Fine {
-	id: string;
-	borrow_id: string;
-	fine_amount: number;
-	fine_date: string;
-	reason: string;
-	status: 'unpaid' | 'paid';
-	payment_date?: string;
-	created_at: string;
-	updated_at: string;
+export enum FineStatus {
+	UNPAID = 'unpaid',
+	PAID = 'paid',
+	PARTIALLY_PAID = 'partially_paid',
+	WAIVED = 'waived',
+}
+
+export enum FineType {
+	OVERDUE = 'overdue',
+	DAMAGE = 'damage',
+	LOST = 'lost',
+	ADMINISTRATIVE = 'administrative',
 }
 
 export interface CreateFineRequest {
 	borrow_id: string;
 	fine_amount: number;
-	reason: string;
+	paid_amount?: number;
+	fine_date: string;
+	payment_date?: string;
+	reason: FineType;
+	description?: string;
+	status?: FineStatus;
+	overdue_days?: number;
+	daily_rate?: number;
+	librarian_notes?: string;
+	reader_notes?: string;
+	due_date?: string;
+	payment_method?: string;
+	transaction_id?: string;
 }
 
-export interface UpdateFineRequest {
-	fine_amount?: number;
-	reason?: string;
-	status?: 'unpaid' | 'paid';
+export interface Fine {
+	id: string;
+	borrow_id: string;
+	borrowRecord?: any; // BorrowRecord type
+	fine_amount: number;
+	paid_amount: number;
+	fine_date: string;
 	payment_date?: string;
+	reason: FineType;
+	description?: string;
+	status: FineStatus;
+	overdue_days?: number;
+	daily_rate?: number;
+	librarian_notes?: string;
+	reader_notes?: string;
+	due_date?: string;
+	payment_method?: string;
+	transaction_id?: string;
+	created_at: string;
+	updated_at: string;
+}
+
+export interface FineStatistics {
+	total: number;
+	unpaid: number;
+	paid: number;
+	partially_paid: number;
+	waived: number;
+	total_amount: number;
+	paid_amount: number;
+	unpaid_amount: number;
+	by_reason: Array<{
+		reason: string;
+		count: number;
+		amount: number;
+	}>;
+	by_month: Array<{
+		month: string;
+		count: number;
+		amount: number;
+	}>;
+}
+
+export interface FinesResponse {
+	data: Fine[];
+	meta: {
+		total: number;
+		page: number;
+		limit: number;
+		totalPages: number;
+	};
+}
+
+export interface FineResponse {
+	data: Fine;
 }
 
 export interface FineWithBorrowDetails extends Fine {
@@ -28,7 +92,7 @@ export interface FineWithBorrowDetails extends Fine {
 		id: string;
 		reader: {
 			id: string;
-			full_name: string;
+			fullName: string;
 			card_number: string;
 		};
 		copy: {

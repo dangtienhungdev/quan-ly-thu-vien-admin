@@ -1,186 +1,102 @@
 import type {
 	CreateFineRequest,
-	Fine,
-	FinePaymentRequest,
+	FineResponse,
 	FineStatistics,
-	FineWithBorrowDetails,
-	PaginatedResponse,
-	PaginationFineQuery,
-	UpdateFineRequest,
-} from '@/types';
-import instance from '../configs/instances';
+	FinesResponse,
+} from '@/types/fines';
 
-const BASE_URL = '/fines';
+import instance from '@/configs/instances';
 
-export const finesApi = {
-	// Tạo phạt mới
-	create: async (data: CreateFineRequest): Promise<Fine> => {
-		const response = await instance.post(BASE_URL, data);
-		return response.data;
+export const FinesAPI = {
+	// Create a new fine
+	create: async (data: CreateFineRequest): Promise<FineResponse> => {
+		const res = await instance.post('/api/fines', data);
+		return res.data;
 	},
 
-	// Lấy danh sách phạt có phân trang
-	getAll: async (
-		params?: PaginationFineQuery
-	): Promise<PaginatedResponse<FineWithBorrowDetails>> => {
-		const response = await instance.get(BASE_URL, { params });
-		return response.data;
+	// Get all fines with pagination
+	getAll: async (params?: {
+		page?: number;
+		limit?: number;
+	}): Promise<FinesResponse> => {
+		const res = await instance.get('/api/fines', { params });
+		return res.data;
 	},
 
-	// Tìm kiếm phạt
+	// Get fines by status
+	getByStatus: async (
+		status: string,
+		params?: {
+			page?: number;
+			limit?: number;
+		}
+	): Promise<FinesResponse> => {
+		const res = await instance.get(`/api/fines/status/${status}`, { params });
+		return res.data;
+	},
+
+	// Search fines
 	search: async (
 		query: string,
-		params?: PaginationFineQuery
-	): Promise<PaginatedResponse<FineWithBorrowDetails>> => {
-		const response = await instance.get(`${BASE_URL}/search`, {
+		params?: {
+			page?: number;
+			limit?: number;
+		}
+	): Promise<FinesResponse> => {
+		const res = await instance.get('/api/fines/search', {
 			params: { q: query, ...params },
 		});
-		return response.data;
+		return res.data;
 	},
 
-	// Lọc theo trạng thái
-	getByStatus: async (
-		status: 'unpaid' | 'paid',
-		params?: PaginationFineQuery
-	): Promise<PaginatedResponse<FineWithBorrowDetails>> => {
-		const response = await instance.get(`${BASE_URL}/status/${status}`, {
-			params,
-		});
-		return response.data;
+	// Get fine statistics
+	getStats: async (): Promise<FineStatistics> => {
+		const res = await instance.get('/api/fines/stats');
+		return res.data;
 	},
 
-	// Lọc theo lý do
-	getByReason: async (
-		reason: string,
-		params?: PaginationFineQuery
-	): Promise<PaginatedResponse<FineWithBorrowDetails>> => {
-		const response = await instance.get(`${BASE_URL}/reason/${reason}`, {
-			params,
-		});
-		return response.data;
-	},
-
-	// Lọc theo độc giả
-	getByReader: async (
-		readerId: string,
-		params?: PaginationFineQuery
-	): Promise<PaginatedResponse<FineWithBorrowDetails>> => {
-		const response = await instance.get(`${BASE_URL}/reader/${readerId}`, {
-			params,
-		});
-		return response.data;
-	},
-
-	// Lọc theo sách
-	getByBook: async (
-		bookId: string,
-		params?: PaginationFineQuery
-	): Promise<PaginatedResponse<FineWithBorrowDetails>> => {
-		const response = await instance.get(`${BASE_URL}/book/${bookId}`, {
-			params,
-		});
-		return response.data;
-	},
-
-	// Lọc theo khoảng thời gian
-	getByDateRange: async (
-		startDate: string,
-		endDate: string,
-		params?: PaginationFineQuery
-	): Promise<PaginatedResponse<FineWithBorrowDetails>> => {
-		const response = await instance.get(`${BASE_URL}/date-range`, {
-			params: { start_date: startDate, end_date: endDate, ...params },
-		});
-		return response.data;
-	},
-
-	// Phạt chưa thanh toán
-	getUnpaid: async (
-		params?: PaginationFineQuery
-	): Promise<PaginatedResponse<FineWithBorrowDetails>> => {
-		const response = await instance.get(`${BASE_URL}/unpaid`, { params });
-		return response.data;
-	},
-
-	// Phạt đã thanh toán
-	getPaid: async (
-		params?: PaginationFineQuery
-	): Promise<PaginatedResponse<FineWithBorrowDetails>> => {
-		const response = await instance.get(`${BASE_URL}/paid`, { params });
-		return response.data;
-	},
-
-	// Thống kê phạt
-	getStatistics: async (): Promise<FineStatistics> => {
-		const response = await instance.get(`${BASE_URL}/stats`);
-		return response.data;
-	},
-
-	// Lấy chi tiết phạt
-	getById: async (id: string): Promise<FineWithBorrowDetails> => {
-		const response = await instance.get(`${BASE_URL}/${id}`);
-		return response.data;
-	},
-
-	// Cập nhật phạt
-	update: async (id: string, data: UpdateFineRequest): Promise<Fine> => {
-		const response = await instance.patch(`${BASE_URL}/${id}`, data);
-		return response.data;
-	},
-
-	// Thanh toán phạt
-	pay: async (id: string, data: FinePaymentRequest): Promise<Fine> => {
-		const response = await instance.post(`${BASE_URL}/${id}/pay`, data);
-		return response.data;
-	},
-
-	// Xóa phạt
-	delete: async (id: string): Promise<void> => {
-		await instance.delete(`${BASE_URL}/${id}`);
-	},
-
-	// Xóa nhiều phạt
-	deleteBatch: async (ids: string[]): Promise<void> => {
-		await instance.delete(`${BASE_URL}/batch`, { data: { ids } });
-	},
-
-	// Xuất báo cáo phạt
-	exportReport: async (params?: PaginationFineQuery): Promise<Blob> => {
-		const response = await instance.get(`${BASE_URL}/export`, {
+	// Export fines report
+	exportReport: async (params?: {
+		page?: number;
+		limit?: number;
+	}): Promise<Blob> => {
+		const res = await instance.get('/api/fines/export', {
 			params,
 			responseType: 'blob',
 		});
-		return response.data;
+		return res.data;
 	},
 
-	// Tính phạt tự động cho sách trả muộn
-	calculateOverdueFine: async (
-		borrowId: string
-	): Promise<{ fine_amount: number; days_overdue: number }> => {
-		const response = await instance.post(
-			`${BASE_URL}/calculate-overdue/${borrowId}`
-		);
-		return response.data;
+	// Pay fine
+	payFine: async (
+		id: string,
+		data: {
+			amount: number;
+			paymentMethod: string;
+			transactionId?: string;
+		}
+	): Promise<FineResponse> => {
+		const res = await instance.patch(`/api/fines/${id}/pay`, data);
+		return res.data;
 	},
 
-	// Tạo phạt cho sách hư hỏng
-	createDamageFine: async (
-		borrowId: string,
-		data: { fine_amount: number; reason: string }
-	): Promise<Fine> => {
-		const response = await instance.post(
-			`${BASE_URL}/damage/${borrowId}`,
-			data
-		);
-		return response.data;
+	// Get fine by ID
+	getById: async (id: string): Promise<FineResponse> => {
+		const res = await instance.get(`/api/fines/${id}`);
+		return res.data;
 	},
 
-	// Tạo phạt cho sách mất
-	createLostFine: async (
-		borrowId: string,
-		data: { fine_amount: number; reason: string }
-	): Promise<Fine> => {
-		const response = await instance.post(`${BASE_URL}/lost/${borrowId}`, data);
-		return response.data;
+	// Update fine
+	update: async (
+		id: string,
+		data: Partial<CreateFineRequest>
+	): Promise<FineResponse> => {
+		const res = await instance.patch(`/api/fines/${id}`, data);
+		return res.data;
+	},
+
+	// Delete fine
+	delete: async (id: string): Promise<void> => {
+		await instance.delete(`/api/fines/${id}`);
 	},
 };

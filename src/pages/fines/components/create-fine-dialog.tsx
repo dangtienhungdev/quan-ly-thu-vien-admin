@@ -1,13 +1,11 @@
-import { finesApi } from '@/apis/fines';
-import { Button } from '@/components/ui/button';
 import {
 	Dialog,
 	DialogContent,
 	DialogHeader,
 	DialogTitle,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { FineStatus, FineType } from '@/types/fines';
+import React, { useState } from 'react';
 import {
 	Select,
 	SelectContent,
@@ -15,9 +13,12 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
+
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import React, { useState } from 'react';
-import { toast } from 'sonner';
+import { useCreateFine } from '@/hooks/fines/use-create-fine';
 
 interface CreateFineDialogProps {
 	open: boolean;
@@ -30,38 +31,62 @@ export function CreateFineDialog({
 	onOpenChange,
 	onSuccess,
 }: CreateFineDialogProps) {
-	const [loading, setLoading] = useState(false);
 	const [formData, setFormData] = useState({
 		borrow_id: '',
 		fine_amount: '',
 		reason: '',
+		description: '',
+	});
+
+	// Sử dụng TanStack Query hook
+	const { createFine, isCreating } = useCreateFine({
+		onSuccess: () => {
+			// Reset form sau khi tạo thành công
+			setFormData({
+				borrow_id: '',
+				fine_amount: '',
+				reason: '',
+				description: '',
+			});
+			onSuccess();
+			onOpenChange(false);
+		},
 	});
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 
 		if (!formData.borrow_id || !formData.fine_amount || !formData.reason) {
-			toast.error('Vui lòng điền đầy đủ thông tin');
-			return;
+			return; // Validation sẽ được xử lý bởi hook
 		}
 
-		try {
-			setLoading(true);
-			await finesApi.create({
-				borrow_id: formData.borrow_id,
-				fine_amount: parseFloat(formData.fine_amount),
-				reason: formData.reason,
-			});
+		// Map reason từ UI sang FineType enum
+		const getFineType = (reason: string): FineType => {
+			switch (reason) {
+				case 'Trả sách muộn':
+					return FineType.OVERDUE;
+				case 'Sách bị hư hỏng':
+					return FineType.DAMAGE;
+				case 'Sách bị mất':
+					return FineType.LOST;
+				case 'Vi phạm quy định':
+				case 'Khác':
+					return FineType.ADMINISTRATIVE;
+				default:
+					return FineType.OVERDUE;
+			}
+		};
 
-			toast.success('Tạo phạt thành công');
-			setFormData({ borrow_id: '', fine_amount: '', reason: '' });
-			onSuccess();
-		} catch (error) {
-			console.error('Error creating fine:', error);
-			toast.error('Có lỗi xảy ra khi tạo phạt');
-		} finally {
-			setLoading(false);
-		}
+		const fineData = {
+			borrow_id: formData.borrow_id,
+			fine_amount: parseFloat(formData.fine_amount),
+			fine_date: new Date().toISOString(),
+			reason: getFineType(formData.reason),
+			description: formData.description || formData.reason,
+			status: FineStatus.UNPAID,
+		};
+
+		createFine(fineData);
 	};
 
 	const handleInputChange = (field: string, value: string) => {
@@ -124,8 +149,10 @@ export function CreateFineDialog({
 							<Label htmlFor="custom_reason">Lý do khác</Label>
 							<Textarea
 								id="custom_reason"
-								value={formData.reason}
-								onChange={(e) => handleInputChange('reason', e.target.value)}
+								value={formData.description}
+								onChange={(e) =>
+									handleInputChange('description', e.target.value)
+								}
 								placeholder="Nhập lý do phạt"
 								required
 							/>
@@ -137,12 +164,12 @@ export function CreateFineDialog({
 							type="button"
 							variant="outline"
 							onClick={() => onOpenChange(false)}
-							disabled={loading}
+							disabled={isCreating}
 						>
 							Hủy
 						</Button>
-						<Button type="submit" disabled={loading}>
-							{loading ? 'Đang tạo...' : 'Tạo phạt'}
+						<Button type="submit" disabled={isCreating}>
+							{isCreating ? 'Đang tạo...' : 'Tạo phạt'}
 						</Button>
 					</div>
 				</form>

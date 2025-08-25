@@ -4,6 +4,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from '@/components/ui/dialog';
+import React, { useEffect, useState } from 'react';
 import {
 	Select,
 	SelectContent,
@@ -11,14 +12,13 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
-import React, { useState } from 'react';
 
-import { finesApi } from '@/apis/fines';
 import { Button } from '@/components/ui/button';
+import type { FineWithBorrowDetails } from '@/types/fines';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import type { FineWithBorrowDetails } from '@/types';
 import { toast } from 'sonner';
+import { usePayFine } from '@/hooks/fines/use-pay-fine';
 
 interface PayFineDialogProps {
 	open: boolean;
@@ -33,10 +33,30 @@ export function PayFineDialog({
 	fine,
 	onSuccess,
 }: PayFineDialogProps) {
-	const [loading, setLoading] = useState(false);
 	const [formData, setFormData] = useState({
 		payment_method: 'cash',
+		amount: 0,
 		notes: '',
+	});
+
+	// Tự động điền số tiền phạt khi fine thay đổi
+	useEffect(() => {
+		if (fine) {
+			setFormData((prev) => ({
+				...prev,
+				amount: fine.fine_amount,
+			}));
+		}
+	}, [fine]);
+
+	// Sử dụng TanStack Query hook
+	const { payFine, isPaying } = usePayFine({
+		onSuccess: () => {
+			// Reset form sau khi thanh toán thành công
+			setFormData({ payment_method: 'cash', amount: 0, notes: '' });
+			onSuccess();
+			onOpenChange(false);
+		},
 	});
 
 	const handleSubmit = async (e: React.FormEvent) => {
@@ -44,23 +64,25 @@ export function PayFineDialog({
 
 		if (!fine) return;
 
-		try {
-			setLoading(true);
-			await finesApi.pay(fine.id, {
-				payment_date: new Date().toISOString(),
-				payment_method: formData.payment_method,
-				notes: formData.notes,
-			});
-
-			toast.success('Thanh toán phạt thành công');
-			setFormData({ payment_method: 'cash', notes: '' });
-			onSuccess();
-		} catch (error) {
-			console.error('Error paying fine:', error);
-			toast.error('Có lỗi xảy ra khi thanh toán');
-		} finally {
-			setLoading(false);
+		// Validation
+		if (!formData.amount || formData.amount <= 0) {
+			toast.error('Vui lòng nhập số tiền thanh toán hợp lệ');
+			return;
 		}
+
+		if (formData.amount > fine.fine_amount) {
+			toast.error('Số tiền thanh toán không được vượt quá số tiền phạt');
+			return;
+		}
+
+		const paymentData = {
+			amount: formData.amount,
+			paymentMethod: formData.payment_method,
+			transactionId: formData.notes ? `TXN_${Date.now()}` : undefined,
+		};
+
+		console.log('Payment data:', paymentData);
+		payFine({ id: fine.id, data: paymentData });
 	};
 
 	if (!fine) return null;
@@ -80,13 +102,13 @@ export function PayFineDialog({
 							<div>
 								<span className="text-muted-foreground">Độc giả:</span>
 								<div className="font-medium">
-									{fine.borrow_record.reader.fullName}
+									{fine.borrow_record?.reader?.fullName || 'Không có thông tin'}
 								</div>
 							</div>
 							<div>
 								<span className="text-muted-foreground">Sách:</span>
 								<div className="font-medium">
-									{fine.borrow_record.copy.book.title}
+									{fine.borrow_record?.copy?.book?.title || 'Không có tên sách'}
 								</div>
 							</div>
 							<div>
@@ -104,6 +126,28 @@ export function PayFineDialog({
 
 					<form onSubmit={handleSubmit} className="space-y-4">
 						<div className="space-y-2">
+							<Label htmlFor="amount">Số tiền thanh toán</Label>
+							<input
+								type="number"
+								id="amount"
+								value={formData.amount}
+								onChange={(e) =>
+									setFormData((prev) => ({
+										...prev,
+										amount: Number(e.target.value),
+									}))
+								}
+								placeholder="Nhập số tiền thanh toán"
+								className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+								min="0"
+								max={fine.fine_amount}
+							/>
+							<div className="text-sm text-muted-foreground">
+								Số tiền phạt: {fine.fine_amount.toLocaleString()} VNĐ
+							</div>
+						</div>
+
+						<div className="space-y-2">
 							<Label htmlFor="payment_method">Phương thức thanh toán</Label>
 							<Select
 								value={formData.payment_method}
@@ -118,7 +162,7 @@ export function PayFineDialog({
 									<SelectItem value="cash">Tiền mặt</SelectItem>
 									<SelectItem value="bank_transfer">Chuyển khoản</SelectItem>
 									<SelectItem value="card">Thẻ tín dụng</SelectItem>
-									<SelectItem value="other">Khác</SelectItem>
+									<SelectItem value="online">Thanh toán online</SelectItem>
 								</SelectContent>
 							</Select>
 						</div>
@@ -141,16 +185,16 @@ export function PayFineDialog({
 								type="button"
 								variant="outline"
 								onClick={() => onOpenChange(false)}
-								disabled={loading}
+								disabled={isPaying}
 							>
 								Hủy
 							</Button>
 							<Button
 								type="submit"
-								disabled={loading}
+								disabled={isPaying}
 								className="bg-green-600 hover:bg-green-700"
 							>
-								{loading ? 'Đang xử lý...' : 'Xác nhận thanh toán'}
+								{isPaying ? 'Đang xử lý...' : 'Xác nhận thanh toán'}
 							</Button>
 						</div>
 					</form>

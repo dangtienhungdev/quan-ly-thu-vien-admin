@@ -1,4 +1,15 @@
 import {
+	BorrowRecordsTabs,
+	PageHeader,
+	RecordDetailsDialog,
+} from './components';
+import type { CreateFineRequest, FineType } from '@/types/fines';
+import {
+	createSearchParams,
+	useNavigate,
+	useSearchParams,
+} from 'react-router-dom';
+import {
 	useApproveBorrowRecord,
 	useBorrowRecordsByStatus,
 	useBorrowRecordsStats,
@@ -9,28 +20,21 @@ import {
 	useReturnBook,
 	useSendReminders,
 } from '@/hooks/borrow-records';
-import {
-	createSearchParams,
-	useNavigate,
-	useSearchParams,
-} from 'react-router-dom';
-import {
-	BorrowRecordsTabs,
-	PageHeader,
-	RecordDetailsDialog,
-} from './components';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { ReservationsAPI } from '@/apis/reservations';
-import { useUpdatePhysicalCopyStatus } from '@/hooks/physical-copies';
-import type { BorrowStatus } from '@/types/borrow-records';
-import { useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
 import { ApproveRejectDialog } from './components/approve-reject-dialog';
+import { BorrowRecordsAPI } from '@/apis/borrow-records';
+import type { BorrowStatus } from '@/types/borrow-records';
 import { CreateBorrowRecordDialog } from './components/create-borrow-record-dialog';
 import { DeleteConfirmDialog } from './components/delete-confirm-dialog';
 import { RenewBookDialog } from './components/renew-book-dialog';
+import { ReservationsAPI } from '@/apis/reservations';
 import { ReturnBookDialog } from './components/return-book-dialog';
 import { StatisticsCards } from './components/statistics-cards';
+import { toast } from 'sonner';
+import { useCreateFine } from '@/hooks/fines/use-create-fine';
+import { useState } from 'react';
+import { useUpdatePhysicalCopyStatus } from '@/hooks/physical-copies';
 
 export default function BorrowRecordsPage() {
 	const navigate = useNavigate();
@@ -91,6 +95,35 @@ export default function BorrowRecordsPage() {
 	const { approveBorrowRecord, isApproving } = useApproveBorrowRecord();
 	const { rejectBorrowRecord, isRejecting } = useRejectBorrowRecord();
 
+	// Hook để cập nhật trạng thái quá hạn
+	const updateOverdueMutation = useMutation({
+		mutationFn: async (record: any) => {
+			return await BorrowRecordsAPI.update(record.id, {
+				status: 'overdue',
+				return_notes: `Cập nhật trạng thái quá hạn - ${new Date().toLocaleDateString(
+					'vi-VN'
+				)}`,
+			});
+		},
+		onSuccess: (updatedRecord) => {
+			toast.success('Đã cập nhật trạng thái thành quá hạn!');
+
+			// Invalidate queries để refresh data
+			queryClient.invalidateQueries({ queryKey: ['borrow-records'] });
+			queryClient.invalidateQueries({ queryKey: ['borrow-records-stats'] });
+			queryClient.invalidateQueries({
+				queryKey: ['borrow-records-by-status', borrowRecordStatus],
+			});
+		},
+		onError: (error: Error) => {
+			toast.error('Có lỗi xảy ra khi cập nhật trạng thái quá hạn!');
+			console.error('Error updating overdue status:', error);
+		},
+	});
+
+	// Hook để tạo phiếu phạt
+	const { createFine, isCreating: isCreatingFine } = useCreateFine();
+
 	// New hooks for reservation and physical copy management
 	const updatePhysicalCopyStatusMutation = useUpdatePhysicalCopyStatus();
 	const { mutate: sendReminders, isPending: isSendingReminders } =
@@ -107,6 +140,47 @@ export default function BorrowRecordsPage() {
 	};
 
 	const { records, isLoading } = getCurrentData();
+
+	// Function to handle update overdue status
+	const handleUpdateOverdue = (record: any) => {
+		updateOverdueMutation.mutate(record);
+	};
+
+	// Function to handle create fine
+	const handleCreateFine = (record: any) => {
+		// Tính toán số ngày quá hạn
+		const calculateDaysOverdue = (dueDate: string) => {
+			const due = new Date(dueDate);
+			const today = new Date();
+			const diffTime = today.getTime() - due.getTime();
+			const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+			return diffDays > 0 ? diffDays : 0;
+		};
+
+		const daysOverdue = calculateDaysOverdue(record.due_date);
+		const dailyRate = 10000; // 10,000 VND mỗi ngày
+		const fineAmount = daysOverdue * dailyRate;
+
+		const fineData: CreateFineRequest = {
+			borrow_id: record.id,
+			fine_amount: fineAmount,
+			fine_date: new Date().toISOString(),
+			reason: 'overdue' as FineType,
+			description: `Phạt trả sách muộn ${daysOverdue} ngày`,
+			overdue_days: daysOverdue,
+			daily_rate: dailyRate,
+			librarian_notes: `Tạo phiếu phạt tự động cho sách "${record.physicalCopy?.book?.title}"`,
+		};
+
+		createFine(fineData, {
+			onSuccess: () => {
+				// Invalidate queries để refresh data
+				queryClient.invalidateQueries({ queryKey: ['fines'] });
+				queryClient.invalidateQueries({ queryKey: ['borrow-records'] });
+				queryClient.invalidateQueries({ queryKey: ['borrow-records-stats'] });
+			},
+		});
+	};
 
 	const handleCreateBorrowRecord = (data: any) => {
 		createBorrowRecord(data, {
@@ -469,11 +543,15 @@ export default function BorrowRecordsPage() {
 				onRenew={openRenewDialog}
 				onSendNotification={handleSendNotification}
 				onDelete={handleDeleteRecord}
+				onUpdateOverdue={handleUpdateOverdue}
+				onCreateFine={handleCreateFine}
 				isApproving={isApproving}
 				isReturning={isReturning}
 				isRenewing={isRenewing}
 				isSendingReminders={isSendingReminders}
 				isDeleting={isDeleting}
+				isUpdatingOverdue={updateOverdueMutation.isPending}
+				isCreatingFine={isCreatingFine}
 				shouldDisableApproveButton={shouldDisableApproveButton}
 				approvedBooks={approvedBooks}
 			/>

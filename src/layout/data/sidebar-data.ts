@@ -10,7 +10,6 @@ import {
 	Library,
 	PenTool,
 	Receipt,
-	RefreshCw,
 	User,
 	Users,
 	Users2,
@@ -129,11 +128,11 @@ export const sidebarData: SidebarData = {
 					icon: Calendar,
 					url: '/reservations',
 				},
-				{
-					title: 'Quản lý gia hạn',
-					icon: RefreshCw,
-					url: '/renewals',
-				},
+				// {
+				// 	title: 'Quản lý gia hạn',
+				// 	icon: RefreshCw,
+				// 	url: '/renewals',
+				// },
 				{
 					title: 'Quản lý phạt',
 					icon: Receipt,

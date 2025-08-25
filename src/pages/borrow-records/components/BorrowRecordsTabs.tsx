@@ -13,11 +13,15 @@ interface BorrowRecordsTabsProps {
 	onRenew: (record: any) => void;
 	onSendNotification: (record: any) => void;
 	onDelete: (record: any) => void;
+	onUpdateOverdue: (record: any) => void;
+	onCreateFine: (record: any) => void;
 	isApproving: boolean;
 	isReturning: boolean;
 	isRenewing: boolean;
 	isSendingReminders: boolean;
 	isDeleting: boolean;
+	isUpdatingOverdue: boolean;
+	isCreatingFine: boolean;
 	shouldDisableApproveButton: (record: any) => boolean;
 	approvedBooks: Record<string, boolean>;
 }
@@ -33,11 +37,15 @@ export const BorrowRecordsTabs: React.FC<BorrowRecordsTabsProps> = ({
 	onRenew,
 	onSendNotification,
 	onDelete,
+	onUpdateOverdue,
+	onCreateFine,
 	isApproving,
 	isReturning,
 	isRenewing,
 	isSendingReminders,
 	isDeleting,
+	isUpdatingOverdue,
+	isCreatingFine,
 	shouldDisableApproveButton,
 	approvedBooks,
 }) => {
@@ -61,13 +69,18 @@ export const BorrowRecordsTabs: React.FC<BorrowRecordsTabsProps> = ({
 					onRenew={onRenew}
 					onSendNotification={onSendNotification}
 					onDelete={onDelete}
+					onUpdateOverdue={onUpdateOverdue}
+					onCreateFine={onCreateFine}
 					isApproving={isApproving}
 					isReturning={isReturning}
 					isRenewing={isRenewing}
 					isSendingReminders={isSendingReminders}
 					isDeleting={isDeleting}
+					isUpdatingOverdue={isUpdatingOverdue}
+					isCreatingFine={isCreatingFine}
 					shouldDisableApproveButton={shouldDisableApproveButton}
 					approvedBooks={approvedBooks}
+					currentStatus={status}
 				/>
 			</TabsContent>
 		</Tabs>

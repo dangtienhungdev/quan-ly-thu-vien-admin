@@ -1,11 +1,3 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogHeader,
-	DialogTitle,
-} from '@/components/ui/dialog';
 import {
 	Book,
 	Calendar,
@@ -15,12 +7,21 @@ import {
 	User,
 	XCircle,
 } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
+} from '@/components/ui/dialog';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { useReservationById } from '@/hooks/reservations';
 import { format } from 'date-fns';
+import { useGetUserById } from '@/hooks/users/use-get-user-by-id';
+import { useReservationById } from '@/hooks/reservations';
 import { vi } from 'date-fns/locale';
 
 interface ReservationDetailsDialogProps {
@@ -36,6 +37,9 @@ export const ReservationDetailsDialog: React.FC<
 		id: reservationId || '',
 		enabled: open && !!reservationId,
 	});
+
+	// lấy ra thông tin người dùng
+	const { data: user } = useGetUserById(reservation?.fulfilled_by || '');
 
 	const getStatusColor = (status: string) => {
 		const colors: Record<string, string> = {
@@ -442,8 +446,8 @@ export const ReservationDetailsDialog: React.FC<
 											<label className="text-sm font-medium text-muted-foreground">
 												Thực hiện bởi
 											</label>
-											<p className="text-sm">
-												{reservation.fulfilled_by || 'N/A'}
+											<p className="capitalize text-sm">
+												{`${user?.role} - ${user?.username}` || 'N/A'}
 											</p>
 										</div>
 									</div>
