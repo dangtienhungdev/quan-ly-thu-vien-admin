@@ -10,18 +10,6 @@ import {
 	AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import type {
-	CreatePublisherRequest,
-	Publisher,
-	UpdatePublisherRequest,
-} from '@/types/publishers';
-import {
-	IconEdit,
-	IconPlus,
-	IconRefresh,
-	IconSwitch,
-	IconTrash,
-} from '@tabler/icons-react';
 import {
 	Sheet,
 	SheetContent,
@@ -37,29 +25,65 @@ import {
 	TableHeader,
 	TableRow,
 } from '@/components/ui/table';
-import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
 	usePublisherStats,
 	usePublishers,
 	useTogglePublisherStatus,
 	useUpdatePublisher,
 } from '@/hooks/publishers';
+import type {
+	CreatePublisherRequest,
+	Publisher,
+	UpdatePublisherRequest,
+} from '@/types/publishers';
+import {
+	IconEdit,
+	IconPlus,
+	IconRefresh,
+	IconSearch,
+	IconSwitch,
+	IconTrash,
+} from '@tabler/icons-react';
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { PublishersAPI } from '@/apis/publishers';
+import PaginationWrapper from '@/components/pagination-wrapper';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import CreatePublisherForm from './components/create-publisher-form';
-import EditPublisherForm from './components/edit-publisher-form';
-import PaginationWrapper from '@/components/pagination-wrapper';
-import { PublishersAPI } from '@/apis/publishers';
+import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
-import { useState } from 'react';
+import CreatePublisherForm from './components/create-publisher-form';
+import EditPublisherForm from './components/edit-publisher-form';
 
 const PublishersPage = () => {
 	const [queryParams] = useSearchParams();
 	const navigate = useNavigate();
 	const page = queryParams.get('page');
 	const limit = queryParams.get('limit');
+	const search = queryParams.get('search');
+
+	// State cho search
+	const [searchValue, setSearchValue] = useState(search || '');
+	const [currentSearch, setCurrentSearch] = useState(search || '');
+	const searchInputRef = useRef<HTMLInputElement>(null);
+
+	// Đồng bộ searchValue với URL params
+	useEffect(() => {
+		setSearchValue(search || '');
+		setCurrentSearch(search || '');
+	}, [search]);
+
+	// Cập nhật URL khi currentSearch thay đổi
+	useEffect(() => {
+		const searchParams = new URLSearchParams();
+		searchParams.set('page', '1'); // Reset về trang 1 khi search
+		if (currentSearch) {
+			searchParams.set('search', currentSearch);
+		}
+		navigate(`?${searchParams.toString()}`, { replace: true });
+	}, [currentSearch, navigate]);
 
 	// State cho Sheet tạo publisher
 	const [isCreateSheetOpen, setIsCreateSheetOpen] = useState(false);
@@ -91,13 +115,38 @@ const PublishersPage = () => {
 	// Hook để toggle status
 	const { toggleStatus, isToggling } = useTogglePublisherStatus();
 
+	const params: any = {
+		page: page ? Number(page) : 1,
+		limit: limit ? Number(limit) : 10,
+	};
+
+	if (currentSearch) {
+		params.search = currentSearch;
+	}
+
 	const { publishers, meta, isLoading, isError, error, refetch } =
 		usePublishers({
-			params: {
-				page: page ? Number(page) : 1,
-				limit: limit ? Number(limit) : 10,
-			},
+			params,
 		});
+
+	// Hàm xử lý search - chỉ cập nhật state
+	const handleSearchChange = (value: string) => {
+		setSearchValue(value);
+	};
+
+	// Hàm thực hiện search
+	const handleSearch = () => {
+		setCurrentSearch(searchValue);
+		// Giữ focus cho input
+		searchInputRef.current?.focus();
+	};
+
+	// Hàm xử lý khi nhấn Enter
+	const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+		if (e.key === 'Enter') {
+			handleSearch();
+		}
+	};
 
 	// Hook để lấy thống kê
 	const { stats } = usePublisherStats();
@@ -188,9 +237,12 @@ const PublishersPage = () => {
 
 	// Hàm xử lý thay đổi trang
 	const handlePageChange = (newPage: number) => {
-		const newParams = new URLSearchParams(queryParams);
-		newParams.set('page', newPage.toString());
-		navigate(`?${newParams.toString()}`);
+		const searchParams = new URLSearchParams();
+		searchParams.set('page', newPage.toString());
+		if (currentSearch) {
+			searchParams.set('search', currentSearch);
+		}
+		navigate(`?${searchParams.toString()}`);
 	};
 
 	// Hàm xử lý toggle status
@@ -280,6 +332,31 @@ const PublishersPage = () => {
 				</div>
 			</div>
 
+			{/* Search Input */}
+			<div className="mb-4">
+				<div className="flex gap-2">
+					<div className="relative flex-1">
+						<IconSearch className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+						<Input
+							ref={searchInputRef}
+							placeholder="Tìm kiếm theo tên, địa chỉ, email, điện thoại hoặc quốc gia..."
+							value={searchValue}
+							onChange={(e) => handleSearchChange(e.target.value)}
+							onKeyPress={handleKeyPress}
+							className="pl-10"
+						/>
+					</div>
+					<Button
+						onClick={handleSearch}
+						disabled={searchValue === currentSearch}
+						className="px-6"
+					>
+						<IconSearch className="mr-2 h-4 w-4" />
+						Tìm kiếm
+					</Button>
+				</div>
+			</div>
+
 			{/* Thống kê */}
 			{stats && (
 				<div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -340,7 +417,9 @@ const PublishersPage = () => {
 						{publishers.length === 0 ? (
 							<TableRow>
 								<TableCell colSpan={8} className="text-center py-8">
-									Không tìm thấy nhà xuất bản nào
+									{currentSearch
+										? `Không tìm thấy nhà xuất bản nào phù hợp với "${currentSearch}"`
+										: 'Không có nhà xuất bản nào'}
 								</TableCell>
 							</TableRow>
 						) : (

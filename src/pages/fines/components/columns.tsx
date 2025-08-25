@@ -1,7 +1,8 @@
+import { BookOpen, Calendar, DollarSign, User } from 'lucide-react';
+
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { FineWithBorrowDetails } from '@/types';
-import { BookOpen, Calendar, DollarSign, User } from 'lucide-react';
 
 export const columns = (onPayFine: (fine: FineWithBorrowDetails) => void) => [
 	{
@@ -12,7 +13,7 @@ export const columns = (onPayFine: (fine: FineWithBorrowDetails) => void) => [
 				<User className="h-4 w-4 text-muted-foreground" />
 				<div>
 					<div className="font-medium">
-						{fine.borrow_record.reader.full_name}
+						{fine.borrow_record.reader.fullName}
 					</div>
 					<div className="text-sm text-muted-foreground">
 						{fine.borrow_record.reader.card_number}

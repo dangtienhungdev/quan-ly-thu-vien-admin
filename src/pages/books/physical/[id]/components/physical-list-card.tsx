@@ -1,16 +1,27 @@
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import type { CopyCondition, CopyStatus, PhysicalCopy } from '@/types';
 import {
 	AlertTriangle,
 	BookOpen,
 	Calendar,
 	CheckCircle,
+	Edit,
 	FileText,
 	MapPin,
 	Plus,
+	Settings,
 } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import type { CopyCondition, CopyStatus, PhysicalCopy } from '@/types';
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from '@/components/ui/table';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 interface PhysicalListCardProps {
 	physicalCopies: PhysicalCopy[];
@@ -26,7 +37,6 @@ export function PhysicalListCard({
 	onUpdateCondition,
 }: PhysicalListCardProps) {
 	const hasCopies = physicalCopies.length > 0;
-	console.log('🚀 ~ PhysicalListCard ~ physicalCopies:', physicalCopies);
 
 	const getStatusColor = (status: string) => {
 		const colors: Record<string, string> = {
@@ -106,76 +116,96 @@ export function PhysicalListCard({
 						</Button>
 					</div>
 				) : (
-					<div className="space-y-4">
-						{physicalCopies.map((copy) => (
-							<Card key={copy.id} className="hover:shadow-md transition-shadow">
-								<CardContent className="p-4">
-									<div className="flex items-center justify-between">
-										<div className="flex-1">
-											<div className="flex items-center space-x-3 mb-2">
-												{getStatusIcon(copy.status)}
-												<Badge className={getStatusColor(copy.status)}>
-													{copy.status === 'available' && 'Sẵn sàng'}
-													{copy.status === 'borrowed' && 'Đang mượn'}
-													{copy.status === 'reserved' && 'Đã đặt trước'}
-													{copy.status === 'damaged' && 'Hư hỏng'}
-													{copy.status === 'lost' && 'Mất'}
-													{copy.status === 'maintenance' && 'Bảo trì'}
-												</Badge>
-												<Badge
-													className={getConditionColor(copy.current_condition)}
-												>
-													{copy.current_condition === 'new' && 'Mới'}
-													{copy.current_condition === 'good' && 'Tốt'}
-													{copy.current_condition === 'worn' && 'Cũ'}
-													{copy.current_condition === 'damaged' && 'Hư hỏng'}
-												</Badge>
-											</div>
-											<div className="space-y-1">
-												<p className="font-medium">Barcode: {copy.barcode}</p>
-												<div className="flex items-center space-x-4 text-sm text-muted-foreground">
-													<span className="flex items-center">
-														<MapPin className="mr-1 h-3 w-3" />
-														{copy.location}
-													</span>
-													<span className="flex items-center">
-														<Calendar className="mr-1 h-3 w-3" />
-														Mua: {formatDate(copy.purchase_date)}
-													</span>
-													<span className="flex items-center">
-														Giá: {formatPrice(copy.purchase_price)}
-													</span>
-												</div>
-												{copy.condition_details && (
-													<p className="text-sm text-muted-foreground">
-														Chi tiết: {copy.condition_details}
-													</p>
-												)}
-											</div>
-										</div>
+					<Table>
+						<TableHeader>
+							<TableRow>
+								<TableHead className="w-[100px]">Trạng thái</TableHead>
+								<TableHead className="w-[100px]">Tình trạng</TableHead>
+								<TableHead className="w-[150px]">Barcode</TableHead>
+								<TableHead className="w-[120px]">Vị trí</TableHead>
+								<TableHead className="w-[120px]">Ngày mua</TableHead>
+								<TableHead className="w-[120px]">Giá mua</TableHead>
+								<TableHead className="w-[200px]">Chi tiết</TableHead>
+								<TableHead className="w-[120px] text-right">Thao tác</TableHead>
+							</TableRow>
+						</TableHeader>
+						<TableBody>
+							{physicalCopies.map((copy) => (
+								<TableRow key={copy.id} className="hover:bg-muted/50">
+									<TableCell>
 										<div className="flex items-center space-x-2">
+											{getStatusIcon(copy.status)}
+											<Badge className={getStatusColor(copy.status)}>
+												{copy.status === 'available' && 'Sẵn sàng'}
+												{copy.status === 'borrowed' && 'Đang mượn'}
+												{copy.status === 'reserved' && 'Đã đặt trước'}
+												{copy.status === 'damaged' && 'Hư hỏng'}
+												{copy.status === 'lost' && 'Mất'}
+												{copy.status === 'maintenance' && 'Bảo trì'}
+											</Badge>
+										</div>
+									</TableCell>
+									<TableCell>
+										<Badge
+											className={getConditionColor(copy.current_condition)}
+										>
+											{copy.current_condition === 'new' && 'Mới'}
+											{copy.current_condition === 'good' && 'Tốt'}
+											{copy.current_condition === 'worn' && 'Cũ'}
+											{copy.current_condition === 'damaged' && 'Hư hỏng'}
+										</Badge>
+									</TableCell>
+									<TableCell className="font-medium">{copy.barcode}</TableCell>
+									<TableCell>
+										<div className="flex items-center space-x-1">
+											<MapPin className="h-3 w-3 text-muted-foreground" />
+											<span>{copy.location}</span>
+										</div>
+									</TableCell>
+									<TableCell>
+										<div className="flex items-center space-x-1">
+											<Calendar className="h-3 w-4 text-muted-foreground" />
+											<span>{formatDate(copy.purchase_date)}</span>
+										</div>
+									</TableCell>
+									<TableCell className="font-medium">
+										{formatPrice(copy.purchase_price)}
+									</TableCell>
+									<TableCell>
+										{copy.condition_details ? (
+											<span className="text-sm text-muted-foreground">
+												{copy.condition_details}
+											</span>
+										) : (
+											<span className="text-sm text-muted-foreground">-</span>
+										)}
+									</TableCell>
+									<TableCell className="text-right w-fit">
+										<div className="flex items-center space-x-2 justify-end">
 											<Button
 												variant="outline"
-												size="sm"
+												size="icon"
 												onClick={() => onUpdateStatus(copy.id, copy.status)}
+												title="Cập nhật trạng thái"
 											>
-												Cập nhật trạng thái
+												<Settings className="h-4 w-4" />
 											</Button>
 											<Button
 												variant="outline"
-												size="sm"
+												size="icon"
 												onClick={() =>
 													onUpdateCondition(copy.id, copy.current_condition)
 												}
+												title="Cập nhật tình trạng"
 											>
-												Cập nhật tình trạng
+												<Edit className="h-4 w-4" />
 											</Button>
 										</div>
-									</div>
-								</CardContent>
-							</Card>
-						))}
-					</div>
+									</TableCell>
+								</TableRow>
+							))}
+						</TableBody>
+					</Table>
 				)}
 			</CardContent>
 		</Card>

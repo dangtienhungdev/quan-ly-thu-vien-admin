@@ -1,6 +1,3 @@
-import { PhysicalCopiesAPI } from '@/apis';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import {
 	Card,
 	CardContent,
@@ -8,7 +5,6 @@ import {
 	CardHeader,
 	CardTitle,
 } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import {
 	Select,
 	SelectContent,
@@ -18,7 +14,6 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { CopyCondition, CopyStatus } from '@/types';
-import { useQuery } from '@tanstack/react-query';
 import {
 	AlertTriangle,
 	BookOpen,
@@ -27,6 +22,12 @@ import {
 	Plus,
 	Search,
 } from 'lucide-react';
+
+import { PhysicalCopiesAPI } from '@/apis';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 
 export default function PhysicalCopiesPage() {
@@ -125,7 +126,7 @@ export default function PhysicalCopiesPage() {
 	};
 
 	return (
-		<div className="container mx-auto p-6 space-y-6">
+		<div className="space-y-6">
 			{/* Header */}
 			<div className="flex justify-between items-center">
 				<div>

@@ -1,4 +1,4 @@
-import { Button } from '@/components/ui/button';
+import type { Book, UpdateBookRequest } from '@/types/books';
 import {
 	Form,
 	FormControl,
@@ -7,7 +7,7 @@ import {
 	FormLabel,
 	FormMessage,
 } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
+import { IconUpload, IconX } from '@tabler/icons-react';
 import {
 	Select,
 	SelectContent,
@@ -15,20 +15,21 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
+import { useEffect, useState } from 'react';
+
+import type { Author } from '@/types/authors';
+import { Button } from '@/components/ui/button';
+import type { Category } from '@/types/categories';
+import { Input } from '@/components/ui/input';
+import type { Publisher } from '@/types/publishers';
 import { Textarea } from '@/components/ui/textarea';
+import { toast } from 'sonner';
 import { useAllBookCategories } from '@/hooks/book-categories';
 import { useAllGradeLevels } from '@/hooks/grade-levels';
-import { useUploadImage } from '@/hooks/images';
-import type { Author } from '@/types/authors';
-import type { Book, UpdateBookRequest } from '@/types/books';
-import type { Category } from '@/types/categories';
-import type { Publisher } from '@/types/publishers';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { IconUpload, IconX } from '@tabler/icons-react';
-import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
+import { useUploadImage } from '@/hooks/images';
 import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
 
 const updateBookSchema = z.object({
 	title: z
@@ -61,7 +62,7 @@ const updateBookSchema = z.object({
 		.min(1, 'Số trang phải lớn hơn 0')
 		.max(10000, 'Số trang tối đa 10000'),
 	book_type: z.enum(['physical', 'ebook']),
-	physical_type: z.enum(['library_use', 'borrowable']),
+	physical_type: z.enum(['library_use', 'borrowable']).optional(), // Làm optional vì ebook không cần
 	publisher_id: z.string().min(1, 'Nhà xuất bản là bắt buộc'),
 	category_id: z.string().min(1, 'Thể loại là bắt buộc'),
 	author_ids: z.array(z.string()).optional(),
@@ -79,7 +80,7 @@ type UpdateBookFormData = {
 	language: string;
 	page_count: number;
 	book_type: 'physical' | 'ebook';
-	physical_type: 'library_use' | 'borrowable';
+	physical_type?: 'library_use' | 'borrowable'; // Làm optional để phù hợp với schema
 	publisher_id: string;
 	category_id: string;
 	author_ids?: string[];
@@ -140,35 +141,49 @@ const EditBookForm = ({
 			language: book.language,
 			page_count: book.page_count,
 			book_type: book.book_type,
-			physical_type: book.physical_type,
+			physical_type: book.physical_type || 'borrowable', // Đảm bảo có giá trị mặc định
 			publisher_id: book.publisher_id,
 			category_id: book.category_id,
 			author_ids: book.authors?.map((author) => author.id) || [],
-			main_category_id: (book as any).main_category_id || ('none' as any),
+			main_category_id: (book as any).main_category_id || 'none',
 			grade_level_ids: (book as any).grade_level_ids || [],
 		},
 	});
 
 	// Reset form when book changes
 	useEffect(() => {
-		form.reset({
-			title: book.title,
-			isbn: book.isbn,
-			publish_year: book.publish_year,
-			edition: book.edition,
+		// Đảm bảo book có đầy đủ dữ liệu cần thiết
+		if (!book || !book.id) {
+			console.error('❌ EditBookForm: Invalid book data:', book);
+			return;
+		}
+
+		const formData = {
+			title: book.title || '',
+			isbn: book.isbn || '',
+			publish_year: book.publish_year || new Date().getFullYear(),
+			edition: book.edition || '',
 			description: book.description || '',
 			cover_image: book.cover_image || '',
-			language: book.language,
-			page_count: book.page_count,
-			book_type: book.book_type,
-			physical_type: book.physical_type,
-			publisher_id: book.publisher_id,
-			category_id: book.category_id,
+			language: book.language || '',
+			page_count: book.page_count || 0,
+			book_type: book.book_type || 'physical',
+			physical_type: book.physical_type || 'borrowable',
+			publisher_id: book.publisher_id || '',
+			category_id: book.category_id || '',
 			author_ids: book.authors?.map((author) => author.id) || [],
-			main_category_id: (book as any).main_category_id || ('none' as any),
+			main_category_id: (book as any).main_category_id || 'none',
 			grade_level_ids: (book as any).grade_level_ids || [],
-		});
+		};
+
+		// Reset form với dữ liệu mới
+		form.reset(formData);
 		setPreviewUrl(book.cover_image || '');
+
+		// Force re-render form fields
+		setTimeout(() => {
+			form.trigger(); // Trigger validation để đảm bảo form hiển thị đúng
+		}, 100);
 	}, [book, form]);
 
 	const handleSubmit = (data: UpdateBookFormData) => {
@@ -181,7 +196,7 @@ const EditBookForm = ({
 			return;
 		}
 
-		onSubmit({
+		const submitData = {
 			...data,
 			description: data.description || undefined,
 			author_ids: data.author_ids || undefined,
@@ -193,7 +208,13 @@ const EditBookForm = ({
 				data.grade_level_ids && data.grade_level_ids.length > 0
 					? data.grade_level_ids
 					: undefined,
-		});
+			// Chỉ gửi physical_type nếu book_type là physical
+			...(data.book_type === 'physical' && {
+				physical_type: data.physical_type,
+			}),
+		};
+
+		onSubmit(submitData);
 	};
 
 	const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -207,7 +228,6 @@ const EditBookForm = ({
 
 	const handleUploadImage = () => {
 		if (selectedFile) {
-			console.log('🔄 Starting upload for file:', selectedFile.name);
 			uploadImage(selectedFile);
 		} else {
 			console.warn('⚠️ No file selected for upload');

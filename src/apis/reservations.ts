@@ -5,12 +5,15 @@ import type {
 	ReservationBookQuery,
 	ReservationDateRangeQuery,
 	ReservationExpiringSoonQuery,
+	ReservationExpiringSoonResponse,
 	ReservationReaderQuery,
 	ReservationResponse,
 	ReservationSearchQuery,
-	ReservationsResponse,
 	ReservationStatsResponse,
+	ReservationStatus,
 	ReservationStatusQuery,
+	ReservationsResponse,
+	ReservationsStatsByStatusResponse,
 	UpdateReservationRequest,
 } from '../types';
 
@@ -52,12 +55,12 @@ export const ReservationsAPI = {
 
 	// Get reservations by status
 	getByStatus: async (
-		params: ReservationStatusQuery
+		status: ReservationStatus,
+		params?: ReservationStatusQuery
 	): Promise<ReservationsResponse> => {
-		const res = await instance.get(
-			`/api/reservations/status/${params.status}`,
-			{ params }
-		);
+		const res = await instance.get(`/api/reservations/status/${status}`, {
+			params,
+		});
 		return res.data;
 	},
 
@@ -93,17 +96,22 @@ export const ReservationsAPI = {
 	// Get reservations expiring soon
 	getExpiringSoon: async (
 		params: ReservationExpiringSoonQuery
-	): Promise<ReservationsResponse> => {
-		const res = await instance.get(
-			`/api/reservations/expiring-soon/${params.days}`,
-			{ params }
-		);
+	): Promise<ReservationExpiringSoonResponse> => {
+		const res = await instance.get(`/api/reservations/expiring-soon`, {
+			params,
+		});
 		return res.data;
 	},
 
 	// Get reservations statistics
 	getStats: async (): Promise<ReservationStatsResponse> => {
 		const res = await instance.get('/api/reservations/stats');
+		return res.data;
+	},
+
+	// Get reservations statistics by status
+	getStatsByStatus: async (): Promise<ReservationsStatsByStatusResponse> => {
+		const res = await instance.get('/api/reservations/stats/by-status');
 		return res.data;
 	},
 
@@ -123,14 +131,35 @@ export const ReservationsAPI = {
 	},
 
 	// Cancel reservation
-	cancel: async (id: string): Promise<ReservationResponse> => {
-		const res = await instance.post(`/api/reservations/${id}/cancel`);
+	cancel: async (
+		id: string,
+		data: { librarianId: string; reason?: string }
+	): Promise<ReservationResponse> => {
+		const res = await instance.patch(`/api/reservations/${id}/cancel`, data);
+		return res.data;
+	},
+
+	// Expire reservation
+	expire: async (
+		id: string,
+		data: { librarianId: string; reason?: string }
+	): Promise<ReservationResponse> => {
+		const res = await instance.patch(`/api/reservations/${id}/expire`, data);
 		return res.data;
 	},
 
 	// Fulfill reservation
-	fulfill: async (id: string): Promise<ReservationResponse> => {
-		const res = await instance.post(`/api/reservations/${id}/fulfill`);
+	fulfill: async (
+		id: string,
+		data: { librarianId: string; notes?: string }
+	): Promise<ReservationResponse> => {
+		const res = await instance.patch(`/api/reservations/${id}/fulfill`, data);
+		return res.data;
+	},
+
+	// Auto cancel expired reservations
+	autoCancelExpired: async (): Promise<{ cancelledCount: number }> => {
+		const res = await instance.post('/api/reservations/auto-cancel-expired');
 		return res.data;
 	},
 

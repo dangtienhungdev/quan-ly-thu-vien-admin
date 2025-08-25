@@ -1,3 +1,4 @@
+export { useAutoCancelExpired } from './use-auto-cancel-expired';
 export { useCancelReservation } from './use-cancel-reservation';
 export { useCreateBulkReservations } from './use-create-bulk-reservations';
 export { useCreateReservation } from './use-create-reservation';
@@ -6,9 +7,12 @@ export { useFulfillReservation } from './use-fulfill-reservation';
 export { usePendingReservationsByBook } from './use-pending-reservations-by-book';
 export { useReservationById } from './use-reservation-by-id';
 export { useReservationStats } from './use-reservation-stats';
+export { useReservationStatsByStatus } from './use-reservation-stats-by-status';
 export { useReservations } from './use-reservations';
 export { useReservationsByBook } from './use-reservations-by-book';
+export { useReservationsByDateRange } from './use-reservations-by-date-range';
 export { useReservationsByReader } from './use-reservations-by-reader';
 export { useReservationsByStatus } from './use-reservations-by-status';
 export { useReservationsExpiringSoon } from './use-reservations-expiring-soon';
+export { useSearchReservations } from './use-search-reservations';
 export { useUpdateReservation } from './use-update-reservation';

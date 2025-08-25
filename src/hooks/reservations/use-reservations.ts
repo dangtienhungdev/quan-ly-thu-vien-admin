@@ -1,5 +1,12 @@
+import type {
+	ReservationStatus,
+	ReservationStatusQuery,
+} from '@/types/reservations';
+
 import { ReservationsAPI } from '@/apis/reservations';
+import _ from 'lodash';
 import { useQuery } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
 
 interface UseReservationsOptions {
 	page?: number;
@@ -9,19 +16,36 @@ interface UseReservationsOptions {
 }
 
 export const useReservations = (options: UseReservationsOptions = {}) => {
-	const { page = 1, limit = 10, searchQuery, enabled = true } = options;
+	const [params] = useSearchParams();
+	const status = params.get('status') || 'all';
+	const page = params.get('page') || '1';
+	const limit = params.get('limit') || '20';
+	const searchQuery = params.get('searchQuery') || '';
+
+	const reservationParams = {
+		status,
+		page: Number(page),
+		limit: Number(limit),
+		q: searchQuery || '',
+	};
+
+	const { enabled = true } = options;
 
 	const query = useQuery({
-		queryKey: ['reservations', { page, limit, searchQuery }],
+		queryKey: ['reservations', reservationParams],
 		queryFn: () => {
-			if (searchQuery) {
-				return ReservationsAPI.search({ q: searchQuery, page, limit });
+			if (reservationParams.q) {
+				return ReservationsAPI.search(reservationParams);
 			}
-			return ReservationsAPI.getAll({ page, limit });
+			if (status !== 'all') {
+				return ReservationsAPI.getByStatus(
+					status as ReservationStatus,
+					_.omit(reservationParams, 'q', 'status') as ReservationStatusQuery
+				);
+			}
+			return ReservationsAPI.getAll(_.omit(reservationParams, 'q', 'status'));
 		},
 		enabled,
-		staleTime: 5 * 60 * 1000, // 5 minutes
-		gcTime: 10 * 60 * 1000, // 10 minutes
 	});
 
 	return {

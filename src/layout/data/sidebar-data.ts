@@ -6,8 +6,6 @@ import {
 	Building2,
 	Calendar,
 	Command,
-	Copy,
-	FileText,
 	GalleryVerticalEnd,
 	Library,
 	PenTool,
@@ -76,11 +74,11 @@ export const sidebarData: SidebarData = {
 					icon: Library,
 					url: '/categories',
 				},
-				{
-					title: 'Quản lý Khối lớp',
-					icon: Library,
-					url: '/grade-levels',
-				},
+				// {
+				// 	title: 'Quản lý Khối lớp',
+				// 	icon: Library,
+				// 	url: '/grade-levels',
+				// },
 				{
 					title: 'Quản lý nhà xuất bản',
 					icon: Building2,
@@ -90,6 +88,11 @@ export const sidebarData: SidebarData = {
 					title: 'Quản lý tác giả',
 					icon: PenTool,
 					url: '/authors',
+				},
+				{
+					title: 'Thể loại chi tiết',
+					icon: Library,
+					url: '/book-categories',
 				},
 			],
 		},
@@ -101,21 +104,16 @@ export const sidebarData: SidebarData = {
 					icon: BookOpen,
 					url: '/books',
 				},
-				{
-					title: 'Thể loại chi tiết',
-					icon: Library,
-					url: '/book-categories',
-				},
-				{
-					title: 'Bản sao vật lý',
-					icon: Copy,
-					url: '/physical-copies',
-				},
-				{
-					title: 'Sách điện tử',
-					icon: FileText,
-					url: '/ebooks',
-				},
+				// {
+				// 	title: 'Bản sao vật lý',
+				// 	icon: Copy,
+				// 	url: '/physical-copies',
+				// },
+				// {
+				// 	title: 'Sách điện tử',
+				// 	icon: FileText,
+				// 	url: '/ebooks',
+				// },
 			],
 		},
 		{

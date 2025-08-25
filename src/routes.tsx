@@ -13,7 +13,6 @@ import CategoriesPage from './pages/categories/page';
 import Dashboard from './pages/dashboard/page';
 import EBooksPage from './pages/ebooks/page';
 import FinesPage from './pages/fines';
-import GradeLevelsPage from './pages/grade-levels/page';
 import LoginPage from './pages/login/page';
 import NotFound from './pages/not-found';
 import PhysicalBooksPage from './pages/physical-books/page';
@@ -69,10 +68,10 @@ const routes = createBrowserRouter([
 						path: '/categories',
 						element: <CategoriesPage />,
 					},
-					{
-						path: '/grade-levels',
-						element: <GradeLevelsPage />,
-					},
+					// {
+					// 	path: '/grade-levels',
+					// 	element: <GradeLevelsPage />,
+					// },
 					{
 						path: '/book-categories',
 						element: <BookCategoriesPage />,

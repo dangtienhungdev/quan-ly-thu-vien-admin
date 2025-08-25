@@ -448,6 +448,7 @@ CREATE INDEX idx_reservations_priority ON reservations(book_id, priority);
 - ✅ Status management
 - ✅ Search và filtering
 - ✅ Statistics
+- ✅ Bulk operations
 
 ### **Phase 2 - Advanced Features:**
 

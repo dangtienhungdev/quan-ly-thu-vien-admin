@@ -71,3 +71,6 @@ export * from './dashboard';
 
 // Export all types from uploads
 export * from './uploads';
+
+// Export all types from notifications
+export * from './notifications';

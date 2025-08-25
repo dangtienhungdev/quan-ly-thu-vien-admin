@@ -1,15 +1,16 @@
-import { BooksAPI } from '@/apis/books';
-import { EBooksAPI } from '@/apis/ebooks';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Skeleton } from '@/components/ui/skeleton';
 import {
 	BookInfoCard,
 	CreateEBookDialog,
 	EBookDetailHeader,
 	EBookListCard,
 } from '@/pages/books/ebook/[id]/components';
-import type { CreateEBookRequest } from '@/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
+import { BooksAPI } from '@/apis/books';
+import { EBooksAPI } from '@/apis/ebooks';
+import { Skeleton } from '@/components/ui/skeleton';
+import type { CreateEBookRequest } from '@/types';
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -105,7 +106,7 @@ const EBookDetailPage = () => {
 	const ebooks = ebooksData?.data || [];
 
 	return (
-		<div className="container mx-auto p-6 space-y-6">
+		<div className="space-y-6">
 			{/* Header */}
 			<EBookDetailHeader />
 

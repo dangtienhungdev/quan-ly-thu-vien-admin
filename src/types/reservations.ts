@@ -8,12 +8,129 @@ export type ReservationStatus =
 
 export interface Reservation extends BaseEntity {
 	reader_id: string;
+	reader: {
+		id: string;
+		user: null;
+		readerType: null;
+		fullName: string;
+		dob: string;
+		gender: string;
+		address: string;
+		phone: string;
+		cardNumber: string;
+		cardIssueDate: string;
+		cardExpiryDate: string;
+		isActive: boolean;
+		createdAt: string;
+		updatedAt: string;
+	};
 	book_id: string;
+	book: {
+		id: string;
+		title: string;
+		slug: string;
+		isbn: string;
+		publish_year: number;
+		edition: string;
+		description: string;
+		cover_image: string;
+		language: string;
+		page_count: number;
+		book_type: string;
+		physical_type: string;
+		publisher_id: string;
+		category_id: string;
+		main_category_id: null;
+		created_at: string;
+		view: number;
+		updated_at: string;
+	};
+	physical_copy_id: string;
+	physicalCopy: {
+		id: string;
+		book_id: string;
+		barcode: string;
+		status: string;
+		current_condition: string;
+		condition_details: string;
+		purchase_date: string;
+		purchase_price: string;
+		location: string;
+		notes: string;
+		last_checkup_date: string;
+		is_archived: boolean;
+		created_at: string;
+		updated_at: string;
+	};
 	reservation_date: string;
 	expiry_date: string;
 	status: ReservationStatus;
-	reader?: ReservationReaderInfo;
-	book?: ReservationBookInfo;
+	reader_notes: string;
+	librarian_notes: null;
+	fulfillment_date: null;
+	fulfilled_by: null;
+	cancelled_date: null;
+	cancellation_reason: null;
+	cancelled_by: null;
+	priority: number;
+	created_at: string;
+	updated_at: string;
+}
+
+// Type cho response của API expiring-soon
+export interface ReservationExpiringSoonItem {
+	id: string;
+	reader_id: string;
+	reader: {
+		id: string;
+		user: null;
+		readerType: null;
+		fullName: string;
+		dob: string;
+		gender: string;
+		address: string;
+		phone: string;
+		cardNumber: string;
+		cardIssueDate: string;
+		cardExpiryDate: string;
+		isActive: boolean;
+		createdAt: string;
+		updatedAt: string;
+	};
+	book_id: string;
+	book: {
+		id: string;
+		title: string;
+		slug: string;
+		isbn: string;
+		publish_year: number;
+		edition: string;
+		description: string;
+		cover_image: string;
+		language: string;
+		page_count: number;
+		book_type: string;
+		physical_type: string;
+		publisher_id: string;
+		category_id: string;
+		main_category_id: null;
+		created_at: string;
+		view: number;
+		updated_at: string;
+	};
+	reservation_date: string;
+	expiry_date: string;
+	status: ReservationStatus;
+	reader_notes: string;
+	librarian_notes: null;
+	fulfillment_date: null;
+	fulfilled_by: null;
+	cancelled_date: null;
+	cancellation_reason: null;
+	cancelled_by: null;
+	priority: number;
+	created_at: string;
+	updated_at: string;
 }
 
 export interface ReservationReaderInfo {
@@ -140,3 +257,14 @@ export interface ReservationStats {
 export type ReservationsResponse = PaginatedResponse<Reservation>;
 export type ReservationResponse = Reservation;
 export type ReservationStatsResponse = ReservationStats;
+export type ReservationExpiringSoonResponse = ReservationExpiringSoonItem[];
+
+export type ReservationsStatsByStatusResponse = {
+	total: number;
+	byStatus: { status: string; count: number }[];
+	pending: number;
+	fulfilled: number;
+	cancelled: number;
+	expired: number;
+	expiringSoon: number;
+};

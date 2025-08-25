@@ -9,7 +9,23 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import type { Book, CreateBookRequest, UpdateBookRequest } from '@/types/books';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import {
+	IconEdit,
+	IconEye,
+	IconPlus,
+	IconRefresh,
+	IconSearch,
+	IconTrash,
+} from '@tabler/icons-react';
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@/components/ui/select';
 import {
 	Sheet,
 	SheetContent,
@@ -25,39 +41,23 @@ import {
 	TableHeader,
 	TableRow,
 } from '@/components/ui/table';
-import { useAuthors } from '@/hooks/authors';
 import { useBooks, useSearchBooks, useUpdateBook } from '@/hooks/books';
-import { useCategories } from '@/hooks/categories';
-import { usePublishers } from '@/hooks/publishers';
-import type { Book, CreateBookRequest, UpdateBookRequest } from '@/types/books';
-import {
-	IconEdit,
-	IconEye,
-	IconPlus,
-	IconRefresh,
-	IconSearch,
-	IconTrash,
-} from '@tabler/icons-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { BooksAPI } from '@/apis/books';
-import BookCover from '@/components/book-cover';
-import PaginationWrapper from '@/components/pagination-wrapper';
 import { Badge } from '@/components/ui/badge';
+import BookCover from '@/components/book-cover';
+import { BooksAPI } from '@/apis/books';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
-import { useState } from 'react';
-import { toast } from 'sonner';
 import CreateBookForm from './components/create-book-form';
 import EditBookForm from './components/edit-book-form';
+import { Input } from '@/components/ui/input';
+import PaginationWrapper from '@/components/pagination-wrapper';
+import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from 'sonner';
+import { useAuthors } from '@/hooks/authors';
+import { useCategories } from '@/hooks/categories';
+import { usePublishers } from '@/hooks/publishers';
+import { useState } from 'react';
 
 const BooksPage = () => {
 	const [queryParams] = useSearchParams();
@@ -198,6 +198,7 @@ const BooksPage = () => {
 
 	// Hàm xử lý cập nhật book
 	const handleUpdateBook = (data: UpdateBookRequest) => {
+		console.log('🚀 ~ handleUpdateBook ~ data:', data);
 		if (!bookToEdit) return;
 		updateBook({ id: bookToEdit.id, data });
 	};

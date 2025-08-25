@@ -5,7 +5,8 @@ export type BorrowStatus =
 	| 'borrowed'
 	| 'returned'
 	| 'overdue'
-	| 'renewed';
+	| 'renewed'
+	| 'cancelled';
 
 export interface BorrowRecord extends BaseEntity {
 	reader_id: string;
@@ -223,6 +224,7 @@ export interface BorrowRecordStats {
 	returned: number;
 	overdue: number;
 	renewed: number;
+	cancelled: number;
 	pending_approval: number;
 	byStatus: Array<{
 		status: BorrowStatus;

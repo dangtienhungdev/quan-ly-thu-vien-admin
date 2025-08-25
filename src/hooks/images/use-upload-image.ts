@@ -13,8 +13,6 @@ export const useUploadImage = (options: UseUploadImageOptions = {}) => {
 
 	const mutation = useMutation({
 		mutationFn: async (file: File) => {
-			console.log('🚀 Uploading image:', file.name, file.size, file.type);
-
 			// Validate file type
 			if (!file.type.startsWith('image/')) {
 				throw new Error('Chỉ cho phép upload file ảnh');
@@ -28,9 +26,7 @@ export const useUploadImage = (options: UseUploadImageOptions = {}) => {
 			const formData = new FormData();
 			formData.append('file', file);
 
-			console.log('📤 Calling ImagesAPI.upload...');
 			const result = await ImagesAPI.upload(formData);
-			console.log('✅ Upload successful:', result);
 
 			return result;
 		},

@@ -4,6 +4,7 @@ export type UserRole = 'admin' | 'reader';
 
 export type PaginationUserQuery = PaginationQuery & {
 	type?: UserRole;
+	search?: string;
 };
 
 export type User = {

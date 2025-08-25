@@ -7,6 +7,7 @@ export * from './categories';
 export { useIsMobile } from './common/use-mobile';
 export * from './grade-levels';
 export * from './images';
+export * from './notifications';
 export * from './physical-copies';
 export * from './publishers';
 export { useReaderTypes } from './reader-types/use-reader-types';

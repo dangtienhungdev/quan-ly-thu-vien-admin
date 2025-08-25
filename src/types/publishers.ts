@@ -1,6 +1,8 @@
 import type { PaginationQuery } from './common';
 
-export type PaginationPublisherQuery = PaginationQuery;
+export type PaginationPublisherQuery = PaginationQuery & {
+	search?: string;
+};
 
 export type Publisher = {
 	id: string;

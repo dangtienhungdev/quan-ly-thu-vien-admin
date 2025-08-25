@@ -1,5 +1,3 @@
-import { BooksAPI } from '@/apis/books';
-import { Button } from '@/components/ui/button';
 import {
 	Dialog,
 	DialogContent,
@@ -7,13 +5,16 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from '@/components/ui/dialog';
+import React, { useState } from 'react';
+
+import { BooksAPI } from '@/apis/books';
+import { Button } from '@/components/ui/button';
+import type { CreateReservationRequest } from '@/types';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { SearchableSelect } from '../../borrow-records/components/searchable-select';
 import { Textarea } from '@/components/ui/textarea';
 import { useReaders } from '@/hooks/readers';
-import type { CreateReservationRequest } from '@/types';
-import React, { useState } from 'react';
-import { SearchableSelect } from '../../borrow-records/components/searchable-select';
 
 interface CreateReservationDialogProps {
 	open: boolean;
@@ -137,7 +138,7 @@ export function CreateReservationDialog({
 		onOpenChange(false);
 	};
 
-	// Auto-calculate expiry date based on reservation date (default 7 days)
+	// Auto-calculate expiry date based on reservation date (default 2 days)
 	const handleReservationDateChange = (date: string) => {
 		handleInputChange('reservation_date', date);
 
@@ -149,8 +150,8 @@ export function CreateReservationDialog({
 		if (date && !formData.expiry_date) {
 			const reservationDate = new Date(date);
 			const expiryDate = new Date(
-				reservationDate.getTime() + 7 * 24 * 60 * 60 * 1000
-			); // +7 days
+				reservationDate.getTime() + 2 * 24 * 60 * 60 * 1000
+			); // +2 days (ngày hôm đó + 1 ngày nữa)
 			handleInputChange('expiry_date', expiryDate.toISOString().split('T')[0]);
 		}
 	};

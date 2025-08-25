@@ -36,20 +36,18 @@ import {
 	IconEdit,
 	IconPlus,
 	IconRefresh,
+	IconSearch,
 	IconTrash,
 } from '@tabler/icons-react';
-import {
-	createSearchParams,
-	useNavigate,
-	useSearchParams,
-} from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { UsersAPI } from '@/apis/users';
 import PaginationWrapper from '@/components/pagination-wrapper';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useState } from 'react';
 import { toast } from 'sonner';
 import CreateUserForm from './components/create-user-form';
 import EditUserForm from './components/edit-user-form';
@@ -60,6 +58,33 @@ const UserPage = () => {
 	const type = queryParams.get('type');
 	const page = queryParams.get('page');
 	const limit = queryParams.get('limit');
+	const search = queryParams.get('search');
+
+	// State cho search
+	const [searchValue, setSearchValue] = useState(search || '');
+	const [currentSearch, setCurrentSearch] = useState(search || '');
+	const [isInitialLoad, setIsInitialLoad] = useState(true);
+	const searchInputRef = useRef<HTMLInputElement>(null);
+
+	// Đồng bộ searchValue với URL params khi component mount
+	useEffect(() => {
+		setSearchValue(search || '');
+		setCurrentSearch(search || '');
+		setIsInitialLoad(false);
+	}, [search]);
+
+	// Cập nhật URL khi currentSearch thay đổi
+	useEffect(() => {
+		if (!isInitialLoad) {
+			const searchParams = new URLSearchParams();
+			searchParams.set('type', type || 'reader');
+			searchParams.set('page', '1'); // Reset về trang 1 khi search
+			if (currentSearch) {
+				searchParams.set('search', currentSearch);
+			}
+			navigate(`?${searchParams.toString()}`, { replace: true });
+		}
+	}, [currentSearch, type, navigate, isInitialLoad]);
 
 	// State cho Sheet tạo người dùng
 	const [isCreateSheetOpen, setIsCreateSheetOpen] = useState(false);
@@ -102,14 +127,43 @@ const UserPage = () => {
 		params.type = type as UserRole;
 	}
 
+	if (currentSearch) {
+		params.search = currentSearch;
+	}
+
 	const { users, meta, isLoading, isError, error, refetch } = useUsers({
 		params,
 	});
 
+	// Hàm xử lý search - chỉ cập nhật state
+	const handleSearchChange = (value: string) => {
+		setSearchValue(value);
+	};
+
+	// Hàm thực hiện search
+	const handleSearch = () => {
+		setCurrentSearch(searchValue);
+		// Giữ focus cho input
+		searchInputRef.current?.focus();
+	};
+
+	// Hàm xử lý khi nhấn Enter
+	const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+		if (e.key === 'Enter') {
+			handleSearch();
+		}
+	};
+
 	// Hàm xử lý khi tab thay đổi
 	const handleTabChange = (value: string) => {
 		const newType = value === 'admin' ? 'admin' : 'reader';
-		navigate(`?type=${newType}`);
+		const searchParams = new URLSearchParams();
+		searchParams.set('type', newType);
+		searchParams.set('page', '1'); // Reset về trang 1 khi đổi tab
+		if (currentSearch) {
+			searchParams.set('search', currentSearch);
+		}
+		navigate(`?${searchParams.toString()}`);
 	};
 
 	// Hàm xử lý tạo người dùng
@@ -205,13 +259,13 @@ const UserPage = () => {
 
 	// Hàm xử lý thay đổi trang
 	const handlePageChange = (newPage: number) => {
-		navigate({
-			pathname: '/users',
-			search: createSearchParams({
-				page: newPage.toString(),
-				type: type || 'reader',
-			}).toString(),
-		});
+		const searchParams = new URLSearchParams();
+		searchParams.set('page', newPage.toString());
+		searchParams.set('type', type || 'reader');
+		if (currentSearch) {
+			searchParams.set('search', currentSearch);
+		}
+		navigate(`?${searchParams.toString()}`);
 	};
 
 	const getRoleBadgeVariant = (role: string) => {
@@ -308,6 +362,31 @@ const UserPage = () => {
 				</div>
 			</div>
 
+			{/* Search Input */}
+			<div className="mb-4">
+				<div className="flex gap-2">
+					<div className="relative flex-1">
+						<IconSearch className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+						<Input
+							ref={searchInputRef}
+							placeholder="Tìm kiếm theo mã, tên hoặc email..."
+							value={searchValue}
+							onChange={(e) => handleSearchChange(e.target.value)}
+							onKeyPress={handleKeyPress}
+							className="pl-10"
+						/>
+					</div>
+					<Button
+						onClick={handleSearch}
+						disabled={searchValue === currentSearch}
+						className="px-6"
+					>
+						<IconSearch className="mr-2 h-4 w-4" />
+						Tìm kiếm
+					</Button>
+				</div>
+			</div>
+
 			<Tabs
 				orientation="vertical"
 				value={type || 'reader'}
@@ -338,7 +417,9 @@ const UserPage = () => {
 						{users.length === 0 ? (
 							<TableRow>
 								<TableCell colSpan={6} className="text-center py-8">
-									No users found
+									{searchValue
+										? `Không tìm thấy người dùng nào phù hợp với "${searchValue}"`
+										: 'Không có người dùng nào'}
 								</TableCell>
 							</TableRow>
 						) : (

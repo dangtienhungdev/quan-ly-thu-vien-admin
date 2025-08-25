@@ -1,5 +1,5 @@
-import { ReservationsAPI } from '@/apis/reservations';
 import type { ReservationStatus } from '@/types/reservations';
+import { ReservationsAPI } from '@/apis/reservations';
 import { useQuery } from '@tanstack/react-query';
 
 interface UseReservationsByStatusOptions {
@@ -16,10 +16,8 @@ export const useReservationsByStatus = (
 
 	const query = useQuery({
 		queryKey: ['reservations', 'status', status, { page, limit }],
-		queryFn: () => ReservationsAPI.getByStatus({ status, page, limit }),
+		queryFn: () => ReservationsAPI.getByStatus(status),
 		enabled,
-		staleTime: 5 * 60 * 1000, // 5 minutes
-		gcTime: 10 * 60 * 1000, // 10 minutes
 	});
 
 	return {

@@ -1,12 +1,9 @@
-import { finesApi } from '@/apis/fines';
-import { Button } from '@/components/ui/button';
 import {
 	Dialog,
 	DialogContent,
 	DialogHeader,
 	DialogTitle,
 } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
 import {
 	Select,
 	SelectContent,
@@ -14,9 +11,13 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
+import React, { useState } from 'react';
+
+import { finesApi } from '@/apis/fines';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import type { FineWithBorrowDetails } from '@/types';
-import React, { useState } from 'react';
 import { toast } from 'sonner';
 
 interface PayFineDialogProps {
@@ -79,7 +80,7 @@ export function PayFineDialog({
 							<div>
 								<span className="text-muted-foreground">Độc giả:</span>
 								<div className="font-medium">
-									{fine.borrow_record.reader.full_name}
+									{fine.borrow_record.reader.fullName}
 								</div>
 							</div>
 							<div>
