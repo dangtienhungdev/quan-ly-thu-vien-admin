@@ -37,6 +37,7 @@ import { ReaderTypesAPI } from '@/apis/reader-types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import _ from 'lodash';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import EditReaderTypeForm from './components/edit-reader-type-form';
@@ -154,7 +155,10 @@ const ReaderTypesPage = () => {
 	// Hàm xử lý cập nhật reader type
 	const handleUpdateReaderType = (data: UpdateReaderTypeRequest) => {
 		if (!readerTypeToEdit) return;
-		updateReaderType({ id: readerTypeToEdit.id, data });
+		updateReaderType({
+			id: readerTypeToEdit.id,
+			data: _.omit(data, ['lateReturnFinePerDay']),
+		});
 	};
 
 	// Hàm đóng Sheet edit
@@ -277,7 +281,7 @@ const ReaderTypesPage = () => {
 							<TableHead>Loại độc giả</TableHead>
 							<TableHead>Giới hạn mượn</TableHead>
 							<TableHead>Thời gian mượn</TableHead>
-							<TableHead>Tiền phạt/ngày</TableHead>
+							{/* <TableHead>Tiền phạt/ngày</TableHead> */}
 							<TableHead>Mô tả</TableHead>
 							<TableHead className="text-right">Hành động</TableHead>
 						</TableRow>
@@ -301,10 +305,10 @@ const ReaderTypesPage = () => {
 									</TableCell>
 									<TableCell>{readerType.maxBorrowLimit} cuốn</TableCell>
 									<TableCell>{readerType.borrowDurationDays} ngày</TableCell>
-									<TableCell>
+									{/* <TableCell>
 										{formatCurrency(readerType.lateReturnFinePerDay)}
-									</TableCell>
-									<TableCell className="max-w-xs truncate">
+									</TableCell> */}
+									<TableCell className="truncate">
 										{readerType.description}
 									</TableCell>
 									<TableCell className="text-right">

@@ -1,4 +1,12 @@
 import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from '@/components/ui/table';
+import {
 	AlertTriangle,
 	Bell,
 	BookOpen,
@@ -9,18 +17,11 @@ import {
 	Receipt,
 	ThumbsUp,
 } from 'lucide-react';
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
-} from '@/components/ui/table';
+import { useEffect, useRef } from 'react';
 
 import { Badge } from '@/components/ui/badge';
-import type { BorrowStatus } from '@/types/borrow-records';
 import { Button } from '@/components/ui/button';
+import type { BorrowStatus } from '@/types/borrow-records';
 
 interface BorrowRecordsTableProps {
 	records: any[];
@@ -67,6 +68,51 @@ export const BorrowRecordsTable: React.FC<BorrowRecordsTableProps> = ({
 	approvedBooks,
 	currentStatus,
 }) => {
+	// Ref để theo dõi các record đã được xử lý tự động
+	const processedRecordsRef = useRef<Set<string>>(new Set());
+
+	// Logic tự động cập nhật trạng thái quá hạn
+	useEffect(() => {
+		// Chỉ tự động cập nhật khi ở tab "all" hoặc "borrowed"
+		if (
+			records.length > 0 &&
+			!isUpdatingOverdue &&
+			(currentStatus === 'all' || currentStatus === 'borrowed')
+		) {
+			// Reset processed records nếu danh sách records thay đổi hoàn toàn
+			const currentRecordIds = new Set(records.map((record) => record.id));
+			const processedIds = Array.from(processedRecordsRef.current);
+
+			// Nếu có record đã xử lý không còn trong danh sách hiện tại, reset
+			const shouldReset = processedIds.some((id) => !currentRecordIds.has(id));
+			if (shouldReset) {
+				processedRecordsRef.current.clear();
+			}
+
+			const overdueRecords = records.filter((record) => {
+				// Chỉ xử lý các record có status 'borrowed' và bị quá hạn
+				// Và chưa được xử lý trước đó
+				return (
+					record.status === 'borrowed' &&
+					record.due_date &&
+					new Date(record.due_date) < new Date() &&
+					!processedRecordsRef.current.has(record.id)
+				);
+			});
+
+			// Tự động cập nhật từng record quá hạn với delay để tránh gọi API quá nhiều
+			overdueRecords.forEach((record, index) => {
+				setTimeout(() => {
+					console.log(
+						`Tự động cập nhật trạng thái quá hạn cho record: ${record.id}`
+					);
+					processedRecordsRef.current.add(record.id);
+					onUpdateOverdue(record);
+				}, index * 500); // Delay 500ms giữa mỗi lần gọi
+			});
+		}
+	}, [records, isUpdatingOverdue, onUpdateOverdue]);
+
 	const getStatusColor = (status: BorrowStatus) => {
 		const colors: Record<BorrowStatus, string> = {
 			pending_approval: 'bg-yellow-100 text-yellow-800',

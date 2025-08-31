@@ -10,6 +10,19 @@ import {
 	AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import type {
+	CreateUserRequest,
+	UpdateUserRequest,
+	UserRole,
+} from '@/types/user.type';
+import {
+	IconEdit,
+	IconPlus,
+	IconRefresh,
+	IconSearch,
+	IconTrash,
+	IconUpload,
+} from '@tabler/icons-react';
 import {
 	Sheet,
 	SheetContent,
@@ -26,31 +39,20 @@ import {
 	TableRow,
 } from '@/components/ui/table';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useUpdateUser, useUsers } from '@/hooks';
-import type {
-	CreateUserRequest,
-	UpdateUserRequest,
-	UserRole,
-} from '@/types/user.type';
-import {
-	IconEdit,
-	IconPlus,
-	IconRefresh,
-	IconSearch,
-	IconTrash,
-} from '@tabler/icons-react';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useUpdateUser, useUsers } from '@/hooks';
 
-import { UsersAPI } from '@/apis/users';
-import PaginationWrapper from '@/components/pagination-wrapper';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
-import { toast } from 'sonner';
 import CreateUserForm from './components/create-user-form';
 import EditUserForm from './components/edit-user-form';
+import ImportUsersForm from './components/import-users-form';
+import { Input } from '@/components/ui/input';
+import PaginationWrapper from '@/components/pagination-wrapper';
+import { Skeleton } from '@/components/ui/skeleton';
+import { UsersAPI } from '@/apis/users';
+import { toast } from 'sonner';
 
 const UserPage = () => {
 	const [queryParams] = useSearchParams();
@@ -89,6 +91,10 @@ const UserPage = () => {
 	// State cho Sheet tạo người dùng
 	const [isCreateSheetOpen, setIsCreateSheetOpen] = useState(false);
 	const [isCreating, setIsCreating] = useState(false);
+
+	// State cho Sheet import người dùng
+	const [isImportSheetOpen, setIsImportSheetOpen] = useState(false);
+	const [isImporting, setIsImporting] = useState(false);
 
 	// State cho dialog xóa người dùng
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -186,6 +192,37 @@ const UserPage = () => {
 			toast.error(errorMessage);
 		} finally {
 			setIsCreating(false);
+		}
+	};
+
+	// Hàm xử lý import người dùng từ Excel
+	const handleImportUsers = async (transformedData: any[]) => {
+		try {
+			setIsImporting(true);
+			console.log('Importing transformed data:', transformedData);
+
+			// Dữ liệu đã được transform từ ImportUsersForm
+			// Gọi API tạo nhiều user
+			const result = await UsersAPI.createMultiple({ users: transformedData });
+
+			toast.success(
+				`Import thành công ${result.successCount}/${result.totalUsers} người dùng!`
+			);
+
+			// Log kết quả chi tiết
+			console.log('Import result:', result);
+
+			setIsImportSheetOpen(false);
+			refetch(); // Refresh danh sách người dùng
+		} catch (error: unknown) {
+			console.error('Import error:', error);
+			const errorMessage =
+				error instanceof Error
+					? error.message
+					: 'Có lỗi xảy ra khi import người dùng';
+			toast.error(errorMessage);
+		} finally {
+			setIsImporting(false);
 		}
 	};
 
@@ -336,6 +373,27 @@ const UserPage = () => {
 					Quản lý người dùng
 				</h1>
 				<div className="flex items-center space-x-2">
+					<Sheet open={isImportSheetOpen} onOpenChange={setIsImportSheetOpen}>
+						<SheetTrigger asChild>
+							<Button variant="outline">
+								<IconUpload className="mr-2 h-4 w-4" />
+								Import Excel
+							</Button>
+						</SheetTrigger>
+						<SheetContent side="right" className="!w-[70vw] !max-w-[70vw]">
+							<SheetHeader>
+								<SheetTitle>Import người dùng từ Excel</SheetTitle>
+							</SheetHeader>
+							<div className="px-4">
+								<ImportUsersForm
+									onSubmit={handleImportUsers}
+									onCancel={() => setIsImportSheetOpen(false)}
+									isLoading={isImporting}
+								/>
+							</div>
+						</SheetContent>
+					</Sheet>
+
 					<Sheet open={isCreateSheetOpen} onOpenChange={setIsCreateSheetOpen}>
 						<SheetTrigger asChild>
 							<Button>
@@ -423,7 +481,7 @@ const UserPage = () => {
 								</TableCell>
 							</TableRow>
 						) : (
-							users.map((user) => (
+							users.map((user: any) => (
 								<TableRow key={user.id}>
 									<TableCell className="font-medium">{user.userCode}</TableCell>
 									<TableCell>{user.username}</TableCell>

@@ -10,29 +10,6 @@ import {
 	AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import {
-	Sheet,
-	SheetContent,
-	SheetHeader,
-	SheetTitle,
-	SheetTrigger,
-} from '@/components/ui/sheet';
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
-} from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-	useActivateReader,
-	useDeactivateReader,
-	useReaders,
-	useSearchReaders,
-	useUpdateReader,
-} from '@/hooks/readers';
 import type {
 	CreateReaderRequest,
 	Reader,
@@ -42,24 +19,45 @@ import {
 	IconCalendar,
 	IconCheck,
 	IconEdit,
-	IconPlus,
 	IconRefresh,
 	IconSearch,
 	IconTrash,
 	IconX,
 } from '@tabler/icons-react';
+import {
+	Sheet,
+	SheetContent,
+	SheetHeader,
+	SheetTitle,
+} from '@/components/ui/sheet';
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from '@/components/ui/table';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
+import {
+	useActivateReader,
+	useDeactivateReader,
+	useReaders,
+	useSearchReaders,
+	useUpdateReader,
+} from '@/hooks/readers';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { ReadersAPI } from '@/apis/readers';
-import PaginationWrapper from '@/components/pagination-wrapper';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
-import { useState } from 'react';
-import { toast } from 'sonner';
 import CreateReaderForm from './components/create-reader-form';
 import EditReaderForm from './components/edit-reader-form';
+import { Input } from '@/components/ui/input';
+import PaginationWrapper from '@/components/pagination-wrapper';
+import { ReadersAPI } from '@/apis/readers';
+import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from 'sonner';
+import { useState } from 'react';
 
 const ReadersPage = () => {
 	const [queryParams] = useSearchParams();
@@ -598,15 +596,25 @@ const ReadersPage = () => {
 	return (
 		<>
 			<div className="mb-2 flex items-center justify-between space-y-2">
-				<h1 className="text-2xl font-bold tracking-tight">Quản lý độc giả</h1>
+				<h1 className="text-2xl font-bold tracking-tight flex items-center space-x-2">
+					Quản lý độc giả
+					{meta && (
+						<Badge
+							variant="secondary"
+							className="ml-2 text-xs bg-primary text-white"
+						>
+							{meta.totalItems} độc giả
+						</Badge>
+					)}
+				</h1>
 				<div className="flex items-center space-x-2">
 					<Sheet open={isCreateSheetOpen} onOpenChange={setIsCreateSheetOpen}>
-						<SheetTrigger asChild>
+						{/* <SheetTrigger asChild>
 							<Button>
 								<IconPlus className="mr-2 h-4 w-4" />
 								Thêm độc giả
 							</Button>
-						</SheetTrigger>
+						</SheetTrigger> */}
 						<SheetContent side="right" className="w-[400px] sm:w-[540px]">
 							<SheetHeader>
 								<SheetTitle>Thêm độc giả mới</SheetTitle>
@@ -628,7 +636,7 @@ const ReadersPage = () => {
 				onValueChange={handleTabChange}
 				className="space-y-4"
 			>
-				<TabsList className="grid w-full grid-cols-2">
+				{/* <TabsList className="grid w-full grid-cols-2">
 					<TabsTrigger value="all">
 						Tất cả độc giả
 						{meta && (
@@ -645,7 +653,7 @@ const ReadersPage = () => {
 							</Badge>
 						)}
 					</TabsTrigger>
-				</TabsList>
+				</TabsList> */}
 
 				<TabsContent value="all" className="space-y-4">
 					{/* Search Bar và Filter chỉ hiển thị ở tab "Tất cả" */}

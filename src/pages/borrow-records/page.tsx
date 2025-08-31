@@ -1,15 +1,4 @@
 import {
-	BorrowRecordsTabs,
-	PageHeader,
-	RecordDetailsDialog,
-} from './components';
-import type { CreateFineRequest, FineType } from '@/types/fines';
-import {
-	createSearchParams,
-	useNavigate,
-	useSearchParams,
-} from 'react-router-dom';
-import {
 	useApproveBorrowRecord,
 	useBorrowRecordsByStatus,
 	useBorrowRecordsStats,
@@ -20,21 +9,32 @@ import {
 	useReturnBook,
 	useSendReminders,
 } from '@/hooks/borrow-records';
+import type { CreateFineRequest, FineType } from '@/types/fines';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+	createSearchParams,
+	useNavigate,
+	useSearchParams,
+} from 'react-router-dom';
+import {
+	BorrowRecordsTabs,
+	PageHeader,
+	RecordDetailsDialog,
+} from './components';
 
-import { ApproveRejectDialog } from './components/approve-reject-dialog';
 import { BorrowRecordsAPI } from '@/apis/borrow-records';
+import { ReservationsAPI } from '@/apis/reservations';
+import { useCreateFine } from '@/hooks/fines/use-create-fine';
+import { useUpdatePhysicalCopyStatus } from '@/hooks/physical-copies';
 import type { BorrowStatus } from '@/types/borrow-records';
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { ApproveRejectDialog } from './components/approve-reject-dialog';
 import { CreateBorrowRecordDialog } from './components/create-borrow-record-dialog';
 import { DeleteConfirmDialog } from './components/delete-confirm-dialog';
 import { RenewBookDialog } from './components/renew-book-dialog';
-import { ReservationsAPI } from '@/apis/reservations';
 import { ReturnBookDialog } from './components/return-book-dialog';
 import { StatisticsCards } from './components/statistics-cards';
-import { toast } from 'sonner';
-import { useCreateFine } from '@/hooks/fines/use-create-fine';
-import { useState } from 'react';
-import { useUpdatePhysicalCopyStatus } from '@/hooks/physical-copies';
 
 export default function BorrowRecordsPage() {
 	const navigate = useNavigate();
@@ -85,7 +85,6 @@ export default function BorrowRecordsPage() {
 		params: borrowRecordStatus,
 		enabled: true, // Luôn enable để phản ứng với thay đổi params
 	});
-	console.log('🚀 ~ BorrowRecordsPage ~ statusRecords:', statusRecords);
 
 	// Mutation hooks
 	const { createBorrowRecord, isCreating } = useCreateBorrowRecord();

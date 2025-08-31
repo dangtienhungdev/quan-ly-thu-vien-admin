@@ -19,11 +19,12 @@ export const useUpdateReaderType = (
 		mutationFn: ({ id, data }: { id: string; data: UpdateReaderTypeRequest }) =>
 			ReaderTypesAPI.update(id, data),
 		onSuccess: (data) => {
+			console.log('🚀 ~ useUpdateReaderType ~ data:', data);
 			// Invalidate và refetch danh sách reader types
 			queryClient.invalidateQueries({ queryKey: ['reader-types'] });
 
 			// Hiển thị toast thành công
-			toast.success(`Cập nhật loại độc giả ${data.typeName} thành công!`);
+			toast.success(`Cập nhật loại độc giả thành công!`);
 
 			// Gọi callback onSuccess nếu có
 			onSuccess?.(data);

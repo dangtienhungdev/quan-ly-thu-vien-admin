@@ -3,6 +3,17 @@ import type { PaginatedResponse, User } from '../types';
 import type { PaginationUserQuery } from '@/types/user.type';
 import instance from '../configs/instances';
 
+export interface UploadExcelResponse {
+	message: string;
+	filename: string;
+	size: number;
+	totalRows: number;
+	validRows: number;
+	invalidRows: number;
+	errors?: string[];
+	data: any[];
+}
+
 export const UsersAPI = {
 	// Get all users with pagination
 	getAll: async (
@@ -64,6 +75,33 @@ export const UsersAPI = {
 	// get me
 	getMe: async (): Promise<User> => {
 		const res = await instance.get('/api/users/me');
+		return res.data;
+	},
+
+	// Create multiple users
+	createMultiple: async (data: { users: any[] }): Promise<any> => {
+		const res = await instance.post('/api/users/bulk', data);
+		return res.data;
+	},
+
+	// Upload Excel
+	uploadExcel: async (file: File): Promise<UploadExcelResponse> => {
+		const formData = new FormData();
+		formData.append('file', file);
+
+		const res = await instance.post('/api/users/upload-excel', formData, {
+			headers: {
+				'Content-Type': 'multipart/form-data',
+			},
+		});
+		return res.data;
+	},
+
+	// Create users from Excel data
+	createUsersFromExcel: async (excelData: any[]): Promise<any> => {
+		const res = await instance.post('/api/users/create-from-excel', {
+			excelData,
+		});
 		return res.data;
 	},
 };
