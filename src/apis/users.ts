@@ -104,4 +104,25 @@ export const UsersAPI = {
 		});
 		return res.data;
 	},
+
+	// Sync userCode to cardNumber
+	syncUserCodeToCardNumber: async (): Promise<any> => {
+		const res = await instance.post('/api/users/sync-usercode-to-cardnumber');
+		return res.data;
+	},
+
+	// Create reader for user
+	createReaderForUser: async (
+		userId: string,
+		readerData: any
+	): Promise<any> => {
+		const res = await instance.post(`/api/users/${userId}/reader`, readerData);
+		return res.data;
+	},
+
+	// Get reader types
+	getReaderTypes: async (): Promise<any> => {
+		const res = await instance.get('/api/reader-types');
+		return res.data;
+	},
 };

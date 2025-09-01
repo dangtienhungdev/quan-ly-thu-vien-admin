@@ -126,7 +126,7 @@ const UserPage = () => {
 
 	const params: any = {
 		page: page ? Number(page) : 1,
-		limit: limit ? Number(limit) : 10,
+		limit: limit ? Number(limit) : 20,
 	};
 
 	if (type) {
@@ -407,7 +407,7 @@ const UserPage = () => {
 									Thêm {type === 'admin' ? 'nhân viên' : 'người dùng'} mới
 								</SheetTitle>
 							</SheetHeader>
-							<div className="px-4">
+							<div className="px-4 h-full">
 								<CreateUserForm
 									onSubmit={handleCreateUser}
 									onCancel={handleCloseSheet}
