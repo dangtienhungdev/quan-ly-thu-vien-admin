@@ -1,12 +1,7 @@
+import { AlertTriangle, BookOpen, Calendar, CheckCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
 import type { BorrowRecordStats } from '@/types/borrow-records';
-import {
-	AlertTriangle,
-	BookOpen,
-	Calendar,
-	CheckCircle,
-	Clock,
-} from 'lucide-react';
 
 interface StatisticsCardsProps {
 	stats: BorrowRecordStats | null;
@@ -39,9 +34,9 @@ export function StatisticsCards({ stats, isLoading }: StatisticsCardsProps) {
 	}
 
 	return (
-		<div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+		<div className="grid grid-cols-1 md:grid-cols-4 gap-4">
 			{/* Chờ phê duyệt */}
-			<Card>
+			{/* <Card>
 				<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
 					<CardTitle className="text-sm font-medium">Chờ phê duyệt</CardTitle>
 					<Clock className="h-4 w-4 text-yellow-600" />
@@ -52,7 +47,7 @@ export function StatisticsCards({ stats, isLoading }: StatisticsCardsProps) {
 						Yêu cầu mượn sách chờ xử lý
 					</p>
 				</CardContent>
-			</Card>
+			</Card> */}
 
 			{/* Đang mượn */}
 			<Card>
