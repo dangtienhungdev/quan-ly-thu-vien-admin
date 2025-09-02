@@ -193,11 +193,8 @@ export default function FinesPage() {
 			</Card>
 
 			{/* Main Content */}
-			<Tabs defaultValue="all" className="space-y-4">
-				<TabsList className="grid w-full grid-cols-3">
-					<TabsTrigger value="all" onClick={() => setStatusFilter('all')}>
-						Tất cả ({fines.length})
-					</TabsTrigger>
+			<Tabs defaultValue="unpaid" className="space-y-4">
+				<TabsList className="grid w-full grid-cols-2">
 					<TabsTrigger value="unpaid" onClick={() => setStatusFilter('unpaid')}>
 						Chưa thanh toán ({fines.filter((f) => f.status === 'unpaid').length}
 						)
@@ -206,14 +203,6 @@ export default function FinesPage() {
 						Đã thanh toán ({fines.filter((f) => f.status === 'paid').length})
 					</TabsTrigger>
 				</TabsList>
-
-				<TabsContent value="all" className="space-y-4">
-					<DataTable
-						columns={columns(handlePayFine)}
-						data={filteredFines}
-						loading={loading}
-					/>
-				</TabsContent>
 
 				<TabsContent value="unpaid" className="space-y-4">
 					<DataTable
