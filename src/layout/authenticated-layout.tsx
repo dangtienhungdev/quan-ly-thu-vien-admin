@@ -1,7 +1,5 @@
 import { ProfileDropdown } from '@/components/profile-dropdown';
-import { Search } from '@/components/search';
 import SkipToMain from '@/components/skip-to-main';
-import { ThemeSwitch } from '@/components/theme-switch';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { SearchProvider } from '@/context/search-context';
 import { AppSidebar } from '@/layout/app-sidebar';
@@ -61,8 +59,7 @@ export function AuthenticatedLayout({ children }: Props) {
 					<Header>
 						<TopNav links={topNav} />
 						<div className="ml-auto flex items-center space-x-4">
-							<Search />
-							<ThemeSwitch />
+							{/* <Search /> */}
 							<ProfileDropdown />
 						</div>
 					</Header>

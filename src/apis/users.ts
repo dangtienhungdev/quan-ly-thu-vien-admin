@@ -31,7 +31,7 @@ export const UsersAPI = {
 
 	// Get current user profile
 	getProfile: async (): Promise<User> => {
-		const res = await instance.get('/api/auth/me');
+		const res = await instance.get('/api/users/me');
 		return res.data;
 	},
 

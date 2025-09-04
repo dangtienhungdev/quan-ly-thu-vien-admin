@@ -1,5 +1,6 @@
 import type { LoginRequest, User } from '@/types/auth';
-import React, { createContext, useContext, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 
 import { UsersAPI } from '@/apis/users';
 import { useLogin } from '@/hooks';
@@ -20,27 +21,34 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+	const queryClient = useQueryClient();
 	const [user, setUser] = useState<User | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
 	const navigate = useNavigate();
 
 	const isAuthenticated = !!localStorage.getItem('accessToken');
 
+	const { data: currentUser } = useQuery({
+		queryKey: ['currentUser'],
+		queryFn: () => UsersAPI.getProfile(),
+		enabled: !!isAuthenticated,
+	});
+
 	// Use the existing login hook
 	const loginMutation = useLogin({
 		onSuccess: async () => {
-			// Fetch user information after successful login
-			try {
-				const userResponse = await UsersAPI.getProfile();
-				setUser(userResponse.data);
-			} catch (error) {
-				console.error('Failed to fetch user profile:', error);
-			}
+			await queryClient.invalidateQueries({ queryKey: ['currentUser'] });
 		},
 		onError: (error) => {
 			console.error('Login failed:', error);
 		},
 	});
+
+	useEffect(() => {
+		if (currentUser) {
+			setUser(currentUser);
+		}
+	}, [currentUser]);
 
 	const login = async (credentials: LoginRequest): Promise<void> => {
 		try {

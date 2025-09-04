@@ -1,12 +1,10 @@
 import { IconLayoutDashboard } from '@tabler/icons-react';
 import {
-	AudioWaveform,
 	BookOpen,
 	BookOpenCheck,
 	Building2,
 	Calendar,
 	Command,
-	GalleryVerticalEnd,
 	Library,
 	PenTool,
 	Receipt,
@@ -24,19 +22,9 @@ export const sidebarData: SidebarData = {
 	},
 	teams: [
 		{
-			name: 'Shadcn Admin',
+			name: 'Trường THPT Hoài Đức A',
 			logo: Command,
 			plan: 'Vite + ShadcnUI',
-		},
-		{
-			name: 'Acme Inc',
-			logo: GalleryVerticalEnd,
-			plan: 'Enterprise',
-		},
-		{
-			name: 'Acme Corp.',
-			logo: AudioWaveform,
-			plan: 'Startup',
 		},
 	],
 	navGroups: [
@@ -56,8 +44,23 @@ export const sidebarData: SidebarData = {
 			],
 		},
 		{
-			title: 'Hệ thống thư viện',
+			title: 'Quản lý danh mục',
 			items: [
+				{
+					title: 'Quản lý tác giả',
+					icon: PenTool,
+					url: '/authors',
+				},
+				{
+					title: 'Quản lý nhà xuất bản',
+					icon: Building2,
+					url: '/publishers',
+				},
+				{
+					title: 'Quản lý thể loại',
+					icon: Library,
+					url: '/book-categories',
+				},
 				{
 					title: 'Cài đặt quyền mượn sách',
 					icon: Users,
@@ -67,31 +70,6 @@ export const sidebarData: SidebarData = {
 					title: 'Quản lý độc giả',
 					icon: Users2,
 					url: '/readers',
-				},
-				{
-					title: 'Quản lý danh mục',
-					icon: Library,
-					url: '/categories',
-				},
-				// {
-				// 	title: 'Quản lý Khối lớp',
-				// 	icon: Library,
-				// 	url: '/grade-levels',
-				// },
-				{
-					title: 'Quản lý nhà xuất bản',
-					icon: Building2,
-					url: '/publishers',
-				},
-				{
-					title: 'Quản lý tác giả',
-					icon: PenTool,
-					url: '/authors',
-				},
-				{
-					title: 'Thể loại chi tiết',
-					icon: Library,
-					url: '/book-categories',
 				},
 			],
 		},
@@ -103,16 +81,6 @@ export const sidebarData: SidebarData = {
 					icon: BookOpen,
 					url: '/books',
 				},
-				// {
-				// 	title: 'Bản sao vật lý',
-				// 	icon: Copy,
-				// 	url: '/physical-copies',
-				// },
-				// {
-				// 	title: 'Sách điện tử',
-				// 	icon: FileText,
-				// 	url: '/ebooks',
-				// },
 			],
 		},
 		{
@@ -128,11 +96,6 @@ export const sidebarData: SidebarData = {
 					icon: Calendar,
 					url: '/reservations',
 				},
-				// {
-				// 	title: 'Quản lý gia hạn',
-				// 	icon: RefreshCw,
-				// 	url: '/renewals',
-				// },
 				{
 					title: 'Quản lý phạt',
 					icon: Receipt,
