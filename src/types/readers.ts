@@ -5,6 +5,7 @@ export type PaginationReaderQuery = PaginationQuery & {
 	cardExpiryDateFrom?: string; // YYYY-MM-DD format
 	cardExpiryDateTo?: string; // YYYY-MM-DD format
 	phone?: string;
+	q?: string;
 };
 
 export type Reader = {

@@ -1,335 +1,103 @@
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import {
-	AlertDialog,
-	AlertDialogAction,
-	AlertDialogCancel,
-	AlertDialogContent,
-	AlertDialogDescription,
-	AlertDialogFooter,
-	AlertDialogHeader,
-	AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import type {
-	CreateUserRequest,
-	UpdateUserRequest,
-	UserRole,
-} from '@/types/user.type';
-import {
-	IconEdit,
-	IconPlus,
-	IconRefresh,
-	IconSearch,
-	IconTrash,
-	IconUpload,
-} from '@tabler/icons-react';
-import {
-	Sheet,
-	SheetContent,
-	SheetHeader,
-	SheetTitle,
-	SheetTrigger,
-} from '@/components/ui/sheet';
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
-} from '@/components/ui/table';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useEffect, useRef, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useUpdateUser, useUsers } from '@/hooks';
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import CreateUserForm from './components/create-user-form';
-import EditUserForm from './components/edit-user-form';
-import ImportUsersForm from './components/import-users-form';
-import { Input } from '@/components/ui/input';
 import PaginationWrapper from '@/components/pagination-wrapper';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { UsersAPI } from '@/apis/users';
-import { toast } from 'sonner';
+import { useUsers } from '@/hooks';
+import { useReaders } from '@/hooks/readers/use-readers';
+import { useUserOperations } from '@/hooks/users/use-user-operations';
+import { useUserSearch } from '@/hooks/users/use-user-search';
+import type { Reader } from '@/types/readers';
+import type { UserRole } from '@/types/user.type';
+import { IconRefresh } from '@tabler/icons-react';
+import { omit } from 'lodash';
+import { ActionButtons } from './components/action-buttons';
+import { DeleteConfirmDialog } from './components/delete-confirm-dialog';
+import { EditUserSheet } from './components/edit-user-sheet';
+import { SearchBar } from './components/search-bar';
+import { UserTable } from './components/user-table';
 
 const UserPage = () => {
-	const [queryParams] = useSearchParams();
-	const navigate = useNavigate();
-	const type = queryParams.get('type');
-	const page = queryParams.get('page');
-	const limit = queryParams.get('limit');
-	const search = queryParams.get('search');
+	// Custom hooks
+	const searchHook = useUserSearch();
+	const operationsHook = useUserOperations();
 
-	// State cho search
-	const [searchValue, setSearchValue] = useState(search || '');
-	const [currentSearch, setCurrentSearch] = useState(search || '');
-	const [isInitialLoad, setIsInitialLoad] = useState(true);
-	const searchInputRef = useRef<HTMLInputElement>(null);
+	// Destructure search hook
+	const {
+		searchValue,
+		currentSearch,
+		searchInputRef,
+		type,
+		handleSearchChange,
+		handleSearch,
+		handleKeyPress,
+		handleTabChange,
+		handlePageChange,
+		buildApiParams,
+	} = searchHook;
 
-	// Đồng bộ searchValue với URL params khi component mount
-	useEffect(() => {
-		setSearchValue(search || '');
-		setCurrentSearch(search || '');
-		setIsInitialLoad(false);
-	}, [search]);
+	// Destructure operations hook
+	const {
+		isCreateSheetOpen,
+		setIsCreateSheetOpen,
+		isImportSheetOpen,
+		setIsImportSheetOpen,
+		isEditSheetOpen,
+		setIsEditSheetOpen,
+		isDeleteDialogOpen,
+		setIsDeleteDialogOpen,
+		userToDelete,
+		userToEdit,
+		isCreating,
+		isImporting,
+		isUpdating,
+		isDeleting,
+		handleCreateUser,
+		handleImportUsers,
+		handleUpdateUser,
+		handleDeleteUser,
+		openDeleteDialog,
+		openEditSheet,
+		closeDeleteDialog,
+		closeEditSheet,
+	} = operationsHook;
 
-	// Cập nhật URL khi currentSearch thay đổi
-	useEffect(() => {
-		if (!isInitialLoad) {
-			const searchParams = new URLSearchParams();
-			searchParams.set('type', type || 'reader');
-			searchParams.set('page', '1'); // Reset về trang 1 khi search
-			if (currentSearch) {
-				searchParams.set('search', currentSearch);
-			}
-			navigate(`?${searchParams.toString()}`, { replace: true });
-		}
-	}, [currentSearch, type, navigate, isInitialLoad]);
-
-	// State cho Sheet tạo người dùng
-	const [isCreateSheetOpen, setIsCreateSheetOpen] = useState(false);
-	const [isCreating, setIsCreating] = useState(false);
-
-	// State cho Sheet import người dùng
-	const [isImportSheetOpen, setIsImportSheetOpen] = useState(false);
-	const [isImporting, setIsImporting] = useState(false);
-
-	// State cho dialog xóa người dùng
-	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-	const [isDeleting, setIsDeleting] = useState(false);
-	const [userToDelete, setUserToDelete] = useState<{
-		id: string;
-		userCode: string;
-		username: string;
-	} | null>(null);
-
-	// State cho Sheet edit người dùng
-	const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
-	const [userToEdit, setUserToEdit] = useState<{
-		id: string;
-		userCode: string;
-		username: string;
-		email: string;
-		role: UserRole;
-		accountStatus: 'active' | 'inactive' | 'banned';
-	} | null>(null);
-
-	// Hook để cập nhật người dùng
-	const { updateUser, isUpdating } = useUpdateUser({
-		onSuccess: () => {
-			setIsEditSheetOpen(false);
-			setUserToEdit(null);
-		},
-	});
-
-	const params: any = {
-		page: page ? Number(page) : 1,
-		limit: limit ? Number(limit) : 20,
-	};
-
-	if (type) {
-		params.type = type as UserRole;
-	}
-
-	if (currentSearch) {
-		params.search = currentSearch;
-	}
+	// API calls - use readers when type is 'reader', users otherwise
+	const isReaderView = type === 'reader';
 
 	const { users, meta, isLoading, isError, error, refetch } = useUsers({
-		params,
+		params: buildApiParams(),
+		enabled: !isReaderView,
 	});
 
-	// Hàm xử lý search - chỉ cập nhật state
-	const handleSearchChange = (value: string) => {
-		setSearchValue(value);
-	};
+	const {
+		readers,
+		meta: readersMeta,
+		isLoading: isReadersLoading,
+		isError: isReadersError,
+		error: readersError,
+		refetch: refetchReaders,
+	} = useReaders({
+		params: omit(buildApiParams(), 'type'),
+		enabled: isReaderView,
+	});
 
-	// Hàm thực hiện search
-	const handleSearch = () => {
-		setCurrentSearch(searchValue);
-		// Giữ focus cho input
-		searchInputRef.current?.focus();
-	};
+	// Use appropriate data based on view type
+	const currentData = isReaderView ? readers : users;
+	const currentMeta = isReaderView ? readersMeta : meta;
+	const currentIsLoading = isReaderView ? isReadersLoading : isLoading;
+	const currentIsError = isReaderView ? isReadersError : isError;
+	const currentError = isReaderView ? readersError : error;
+	const currentRefetch = isReaderView ? refetchReaders : refetch;
 
-	// Hàm xử lý khi nhấn Enter
-	const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-		if (e.key === 'Enter') {
-			handleSearch();
-		}
-	};
-
-	// Hàm xử lý khi tab thay đổi
-	const handleTabChange = (value: string) => {
-		const newType = value === 'admin' ? 'admin' : 'reader';
-		const searchParams = new URLSearchParams();
-		searchParams.set('type', newType);
-		searchParams.set('page', '1'); // Reset về trang 1 khi đổi tab
-		if (currentSearch) {
-			searchParams.set('search', currentSearch);
-		}
-		navigate(`?${searchParams.toString()}`);
-	};
-
-	// Hàm xử lý tạo người dùng
-	const handleCreateUser = async (data: CreateUserRequest) => {
-		try {
-			setIsCreating(true);
-			const newUser = await UsersAPI.create(data);
-			toast.success(
-				`Tạo ${
-					data.role === 'admin' ? 'nhân viên' : 'người dùng'
-				} thành công! Mã: ${newUser.userCode}`
-			);
-			setIsCreateSheetOpen(false);
-			refetch(); // Refresh danh sách người dùng
-		} catch (error: unknown) {
-			const errorMessage =
-				error instanceof Error
-					? error.message
-					: 'Có lỗi xảy ra khi tạo người dùng';
-			toast.error(errorMessage);
-		} finally {
-			setIsCreating(false);
-		}
-	};
-
-	// Hàm xử lý import người dùng từ Excel
-	const handleImportUsers = async (transformedData: any[]) => {
-		try {
-			setIsImporting(true);
-			console.log('Importing transformed data:', transformedData);
-
-			// Dữ liệu đã được transform từ ImportUsersForm
-			// Gọi API tạo nhiều user
-			const result = await UsersAPI.createMultiple({ users: transformedData });
-
-			toast.success(
-				`Import thành công ${result.successCount}/${result.totalUsers} người dùng!`
-			);
-
-			// Log kết quả chi tiết
-			console.log('Import result:', result);
-
-			setIsImportSheetOpen(false);
-			refetch(); // Refresh danh sách người dùng
-		} catch (error: unknown) {
-			console.error('Import error:', error);
-			const errorMessage =
-				error instanceof Error
-					? error.message
-					: 'Có lỗi xảy ra khi import người dùng';
-			toast.error(errorMessage);
-		} finally {
-			setIsImporting(false);
-		}
-	};
-
-	// Hàm đóng Sheet
-	const handleCloseSheet = () => {
+	// Handler functions
+	const handleCloseCreateSheet = () => {
 		setIsCreateSheetOpen(false);
 	};
 
-	// Hàm mở dialog xóa người dùng
-	const handleOpenDeleteDialog = (user: {
-		id: string;
-		userCode: string;
-		username: string;
-	}) => {
-		setUserToDelete(user);
-		setIsDeleteDialogOpen(true);
-	};
-
-	// Hàm xử lý xóa người dùng
-	const handleDeleteUser = async () => {
-		if (!userToDelete) return;
-
-		try {
-			setIsDeleting(true);
-			await UsersAPI.delete(userToDelete.id);
-			toast.success(`Xóa người dùng ${userToDelete.userCode} thành công!`);
-			setIsDeleteDialogOpen(false);
-			setUserToDelete(null);
-			refetch(); // Refresh danh sách người dùng
-		} catch (error: unknown) {
-			const errorMessage =
-				error instanceof Error
-					? error.message
-					: 'Có lỗi xảy ra khi xóa người dùng';
-			toast.error(errorMessage);
-		} finally {
-			setIsDeleting(false);
-		}
-	};
-
-	// Hàm đóng dialog xóa
-	const handleCloseDeleteDialog = () => {
-		setIsDeleteDialogOpen(false);
-		setUserToDelete(null);
-	};
-
-	// Hàm mở Sheet edit người dùng
-	const handleOpenEditSheet = (user: {
-		id: string;
-		userCode: string;
-		username: string;
-		email: string;
-		role: UserRole;
-		accountStatus: 'active' | 'inactive' | 'banned';
-	}) => {
-		setUserToEdit(user);
-		setIsEditSheetOpen(true);
-	};
-
-	// Hàm xử lý cập nhật người dùng
-	const handleUpdateUser = (data: UpdateUserRequest) => {
-		if (!userToEdit) return;
-		updateUser({ id: userToEdit.id, data });
-	};
-
-	// Hàm đóng Sheet edit
-	const handleCloseEditSheet = () => {
-		setIsEditSheetOpen(false);
-		setUserToEdit(null);
-	};
-
-	// Hàm xử lý thay đổi trang
-	const handlePageChange = (newPage: number) => {
-		const searchParams = new URLSearchParams();
-		searchParams.set('page', newPage.toString());
-		searchParams.set('type', type || 'reader');
-		if (currentSearch) {
-			searchParams.set('search', currentSearch);
-		}
-		navigate(`?${searchParams.toString()}`);
-	};
-
-	const getRoleBadgeVariant = (role: string) => {
-		switch (role) {
-			case 'admin':
-				return 'destructive';
-			case 'user':
-				return 'default';
-			default:
-				return 'secondary';
-		}
-	};
-
-	const getStatusBadgeVariant = (status: string) => {
-		switch (status) {
-			case 'active':
-				return 'default';
-			case 'inactive':
-				return 'secondary';
-			case 'banned':
-				return 'destructive';
-			default:
-				return 'outline';
-		}
-	};
-
-	if (isLoading) {
+	if (currentIsLoading) {
 		return (
 			<div className="container mx-auto py-6">
 				<Card>
@@ -350,15 +118,16 @@ const UserPage = () => {
 		);
 	}
 
-	if (isError) {
+	if (currentIsError) {
 		return (
 			<div className="container mx-auto py-6">
 				<Alert variant="destructive">
 					<AlertDescription>
-						Failed to load users: {error?.message || 'Unknown error'}
+						Failed to load {isReaderView ? 'readers' : 'users'}:{' '}
+						{currentError?.message || 'Unknown error'}
 					</AlertDescription>
 				</Alert>
-				<Button onClick={() => refetch()} className="mt-4">
+				<Button onClick={() => currentRefetch()} className="mt-4">
 					<IconRefresh className="mr-2 h-4 w-4" />
 					Retry
 				</Button>
@@ -372,78 +141,28 @@ const UserPage = () => {
 				<h1 className="text-2xl font-bold tracking-tight">
 					Quản lý người dùng
 				</h1>
-				<div className="flex items-center space-x-2">
-					<Sheet open={isImportSheetOpen} onOpenChange={setIsImportSheetOpen}>
-						<SheetTrigger asChild>
-							<Button variant="outline">
-								<IconUpload className="mr-2 h-4 w-4" />
-								Import Excel
-							</Button>
-						</SheetTrigger>
-						<SheetContent side="right" className="!w-[70vw] !max-w-[70vw]">
-							<SheetHeader>
-								<SheetTitle>Import người dùng từ Excel</SheetTitle>
-							</SheetHeader>
-							<div className="px-4">
-								<ImportUsersForm
-									onSubmit={handleImportUsers}
-									onCancel={() => setIsImportSheetOpen(false)}
-									isLoading={isImporting}
-								/>
-							</div>
-						</SheetContent>
-					</Sheet>
-
-					<Sheet open={isCreateSheetOpen} onOpenChange={setIsCreateSheetOpen}>
-						<SheetTrigger asChild>
-							<Button>
-								<IconPlus className="mr-2 h-4 w-4" />
-								Thêm {type === 'admin' ? 'nhân viên' : 'người dùng'}
-							</Button>
-						</SheetTrigger>
-						<SheetContent side="right" className="w-[400px] sm:w-[540px]">
-							<SheetHeader>
-								<SheetTitle>
-									Thêm {type === 'admin' ? 'nhân viên' : 'người dùng'} mới
-								</SheetTitle>
-							</SheetHeader>
-							<div className="px-4 h-full">
-								<CreateUserForm
-									onSubmit={handleCreateUser}
-									onCancel={handleCloseSheet}
-									isLoading={isCreating}
-									defaultRole={(type as UserRole) || 'reader'}
-								/>
-							</div>
-						</SheetContent>
-					</Sheet>
-				</div>
+				<ActionButtons
+					type={type}
+					isCreateSheetOpen={isCreateSheetOpen}
+					setIsCreateSheetOpen={setIsCreateSheetOpen}
+					isImportSheetOpen={isImportSheetOpen}
+					setIsImportSheetOpen={setIsImportSheetOpen}
+					onCreateUser={handleCreateUser}
+					onImportUsers={handleImportUsers}
+					onCloseCreateSheet={handleCloseCreateSheet}
+					isCreating={isCreating}
+					isImporting={isImporting}
+				/>
 			</div>
 
-			{/* Search Input */}
-			<div className="mb-4">
-				<div className="flex gap-2">
-					<div className="relative flex-1">
-						<IconSearch className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-						<Input
-							ref={searchInputRef}
-							placeholder="Tìm kiếm theo mã, tên hoặc email..."
-							value={searchValue}
-							onChange={(e) => handleSearchChange(e.target.value)}
-							onKeyPress={handleKeyPress}
-							className="pl-10"
-						/>
-					</div>
-					<Button
-						onClick={handleSearch}
-						disabled={searchValue === currentSearch}
-						className="px-6"
-					>
-						<IconSearch className="mr-2 h-4 w-4" />
-						Tìm kiếm
-					</Button>
-				</div>
-			</div>
+			<SearchBar
+				searchValue={searchValue}
+				onSearchChange={handleSearchChange}
+				onSearch={handleSearch}
+				onKeyPress={handleKeyPress}
+				searchInputRef={searchInputRef as React.RefObject<HTMLInputElement>}
+				currentSearch={currentSearch}
+			/>
 
 			<Tabs
 				orientation="vertical"
@@ -460,102 +179,47 @@ const UserPage = () => {
 			</Tabs>
 
 			<div>
-				<Table>
-					<TableHeader>
-						<TableRow>
-							<TableHead>Mã</TableHead>
-							<TableHead>Username</TableHead>
-							<TableHead>Email</TableHead>
-							<TableHead>Role</TableHead>
-							<TableHead>Status</TableHead>
-							<TableHead className="text-right">Hành động</TableHead>
-						</TableRow>
-					</TableHeader>
-					<TableBody>
-						{users.length === 0 ? (
-							<TableRow>
-								<TableCell colSpan={6} className="text-center py-8">
-									{searchValue
-										? `Không tìm thấy người dùng nào phù hợp với "${searchValue}"`
-										: 'Không có người dùng nào'}
-								</TableCell>
-							</TableRow>
-						) : (
-							users.map((user: any) => (
-								<TableRow key={user.id}>
-									<TableCell className="font-medium">{user.userCode}</TableCell>
-									<TableCell>{user.username}</TableCell>
-									<TableCell>{user.email}</TableCell>
-									<TableCell>
-										<Badge variant={getRoleBadgeVariant(user.role)}>
-											{user.role}
-										</Badge>
-									</TableCell>
-									<TableCell>
-										<Badge variant={getStatusBadgeVariant(user.accountStatus)}>
-											{user.accountStatus}
-										</Badge>
-									</TableCell>
-									<TableCell className="text-right">
-										<div className="flex justify-end space-x-1">
-											<Button
-												variant="ghost"
-												size="sm"
-												onClick={() =>
-													handleOpenEditSheet({
-														id: user.id,
-														userCode: user.userCode,
-														username: user.username,
-														email: user.email,
-														role: user.role,
-														accountStatus: user.accountStatus,
-													})
-												}
-												className="h-8 w-8 p-0 text-primary hover:text-primary"
-											>
-												<IconEdit className="h-4 w-4" />
-												<span className="sr-only">Chỉnh sửa người dùng</span>
-											</Button>
-											<Button
-												variant="ghost"
-												size="sm"
-												onClick={() =>
-													handleOpenDeleteDialog({
-														id: user.id,
-														userCode: user.userCode,
-														username: user.username,
-													})
-												}
-												className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-											>
-												<IconTrash className="h-4 w-4" />
-												<span className="sr-only">Xóa người dùng</span>
-											</Button>
-										</div>
-									</TableCell>
-								</TableRow>
-							))
-						)}
-					</TableBody>
-				</Table>
+				<UserTable
+					users={currentData}
+					searchValue={searchValue}
+					onEditUser={(user) => {
+						// Convert Reader to UserToEdit format for editing
+						if (isReaderView && 'readerType' in user) {
+							const reader = user as Reader;
+							openEditSheet({
+								id: reader.id,
+								userCode: reader.user?.userCode || '',
+								username: reader.fullName,
+								email: reader.user?.email || '',
+								role: 'reader' as UserRole,
+								accountStatus: reader.isActive ? 'active' : 'inactive',
+							});
+						} else {
+							openEditSheet(user as Parameters<typeof openEditSheet>[0]);
+						}
+					}}
+					onDeleteUser={openDeleteDialog}
+					isReaderView={isReaderView}
+				/>
 
-				{meta && (
+				{currentMeta && (
 					<div className="mt-4 space-y-4 flex items-center justify-between">
 						<div className="text-sm text-muted-foreground text-center">
-							Showing {users.length} of {meta.totalItems} users
-							{meta.totalPages > 1 && (
+							Showing {currentData.length} of {currentMeta.totalItems}{' '}
+							{isReaderView ? 'readers' : 'users'}
+							{currentMeta.totalPages > 1 && (
 								<span>
 									{' '}
-									(Page {meta.page} of {meta.totalPages})
+									(Page {currentMeta.page} of {currentMeta.totalPages})
 								</span>
 							)}
 						</div>
 
-						{meta.totalPages > 1 && (
+						{currentMeta.totalPages > 1 && (
 							<div className="w-fit">
 								<PaginationWrapper
-									currentPage={meta.page}
-									totalPages={meta.totalPages}
+									currentPage={currentMeta.page}
+									totalPages={currentMeta.totalPages}
 									onPageChange={handlePageChange}
 								/>
 							</div>
@@ -564,55 +228,23 @@ const UserPage = () => {
 				)}
 			</div>
 
-			{/* Dialog xác nhận xóa người dùng */}
-			<AlertDialog
+			<DeleteConfirmDialog
 				open={isDeleteDialogOpen}
 				onOpenChange={setIsDeleteDialogOpen}
-			>
-				<AlertDialogContent>
-					<AlertDialogHeader>
-						<AlertDialogTitle>Xác nhận xóa người dùng</AlertDialogTitle>
-						<AlertDialogDescription>
-							Bạn có chắc chắn muốn xóa người dùng{' '}
-							<strong>{userToDelete?.userCode}</strong> (
-							{userToDelete?.username})?
-							<br />
-							Hành động này không thể hoàn tác.
-						</AlertDialogDescription>
-					</AlertDialogHeader>
-					<AlertDialogFooter>
-						<AlertDialogCancel onClick={handleCloseDeleteDialog}>
-							Hủy
-						</AlertDialogCancel>
-						<AlertDialogAction
-							onClick={handleDeleteUser}
-							disabled={isDeleting}
-							className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-						>
-							{isDeleting ? 'Đang xóa...' : 'Xóa'}
-						</AlertDialogAction>
-					</AlertDialogFooter>
-				</AlertDialogContent>
-			</AlertDialog>
+				userToDelete={userToDelete}
+				onConfirm={handleDeleteUser}
+				onClose={closeDeleteDialog}
+				isDeleting={isDeleting}
+			/>
 
-			{/* Sheet edit người dùng */}
-			<Sheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
-				<SheetContent side="right" className="w-[400px] sm:w-[540px]">
-					<SheetHeader>
-						<SheetTitle>Chỉnh sửa người dùng {userToEdit?.userCode}</SheetTitle>
-					</SheetHeader>
-					<div className="px-4">
-						{userToEdit && (
-							<EditUserForm
-								user={userToEdit}
-								onSubmit={handleUpdateUser}
-								onCancel={handleCloseEditSheet}
-								isLoading={isUpdating}
-							/>
-						)}
-					</div>
-				</SheetContent>
-			</Sheet>
+			<EditUserSheet
+				open={isEditSheetOpen}
+				onOpenChange={setIsEditSheetOpen}
+				userToEdit={userToEdit}
+				onSubmit={handleUpdateUser}
+				onCancel={closeEditSheet}
+				isLoading={isUpdating}
+			/>
 		</>
 	);
 };

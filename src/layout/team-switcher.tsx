@@ -17,7 +17,6 @@ export function TeamSwitcher({
 	const [activeTeam, setActiveTeam] = React.useState(teams[0]);
 
 	const { user } = useAuth();
-	console.log('🚀 ~ TeamSwitcher ~ user:', user);
 
 	return (
 		<Link to="/">

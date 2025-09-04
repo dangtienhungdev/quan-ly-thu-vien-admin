@@ -37,7 +37,7 @@ export const sidebarData: SidebarData = {
 					icon: IconLayoutDashboard,
 				},
 				{
-					title: 'Người dùng',
+					title: 'Quản lý người dùng',
 					url: '/users',
 					icon: User,
 				},

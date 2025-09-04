@@ -1,6 +1,7 @@
-import type { PaginationReaderQuery } from '@/types/readers';
 import { ReadersAPI } from '@/apis/readers';
+import type { PaginationReaderQuery } from '@/types/readers';
 import { useQuery } from '@tanstack/react-query';
+import { omit } from 'lodash';
 
 interface UseReadersOptions {
 	params?: PaginationReaderQuery;
@@ -8,7 +9,13 @@ interface UseReadersOptions {
 }
 
 export const useReaders = (options: UseReadersOptions = {}) => {
-	const { params, enabled = true } = options;
+	let { params, enabled = true } = options;
+
+	if (params?.search) {
+		params.q = params.search;
+	}
+
+	params = omit(params, 'search');
 
 	const query = useQuery({
 		queryKey: ['readers', params],
