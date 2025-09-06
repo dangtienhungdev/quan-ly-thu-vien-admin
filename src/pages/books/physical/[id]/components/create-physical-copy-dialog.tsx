@@ -1,5 +1,8 @@
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
+import type {
+	CopyCondition,
+	CopyStatus,
+	CreatePhysicalCopyRequest,
+} from '@/types';
 import {
 	Dialog,
 	DialogContent,
@@ -7,8 +10,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import React, { useState } from 'react';
 import {
 	Select,
 	SelectContent,
@@ -16,13 +18,13 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
+
+import { Button } from '@/components/ui/button';
+import { Combobox } from '@/components/ui/combobox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import type {
-	CopyCondition,
-	CopyStatus,
-	CreatePhysicalCopyRequest,
-} from '@/types';
-import React, { useState } from 'react';
+import { useActiveLocations } from '@/hooks/locations';
 
 interface CreatePhysicalCopyDialogProps {
 	open: boolean;
@@ -41,6 +43,8 @@ export function CreatePhysicalCopyDialog({
 	onSubmit,
 	isLoading = false,
 }: CreatePhysicalCopyDialogProps) {
+	const { data: locations } = useActiveLocations();
+
 	const [formData, setFormData] = useState({
 		barcode: '',
 		status: 'available' as CopyStatus,
@@ -48,7 +52,7 @@ export function CreatePhysicalCopyDialog({
 		condition_details: '',
 		purchase_date: '',
 		purchase_price: 0,
-		location: '',
+		location_id: '',
 		notes: '',
 		last_checkup_date: '',
 		is_archived: false,
@@ -78,7 +82,7 @@ export function CreatePhysicalCopyDialog({
 			condition_details: '',
 			purchase_date: '',
 			purchase_price: 0,
-			location: '',
+			location_id: '',
 			notes: '',
 			last_checkup_date: '',
 			is_archived: false,
@@ -123,7 +127,7 @@ export function CreatePhysicalCopyDialog({
 									handleInputChange('status', value as CopyStatus)
 								}
 							>
-								<SelectTrigger>
+								<SelectTrigger className="w-full">
 									<SelectValue placeholder="Chọn trạng thái" />
 								</SelectTrigger>
 								<SelectContent>
@@ -171,14 +175,22 @@ export function CreatePhysicalCopyDialog({
 					{/* Location and Condition */}
 					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 						<div className="space-y-2">
-							<Label htmlFor="location">Vị trí *</Label>
-							<Input
-								id="location"
-								type="text"
-								value={formData.location}
-								onChange={(e) => handleInputChange('location', e.target.value)}
-								placeholder="Kệ A2-T3"
-								required
+							<Label htmlFor="location_id">Vị trí *</Label>
+							<Combobox
+								options={
+									locations?.map((location) => ({
+										value: location.id,
+										label: location.name,
+									})) || []
+								}
+								value={formData.location_id}
+								onValueChange={(value) =>
+									handleInputChange('location_id', value)
+								}
+								placeholder="Chọn vị trí..."
+								searchPlaceholder="Tìm kiếm vị trí..."
+								emptyText="Không tìm thấy vị trí nào"
+								disabled={isLoading}
 							/>
 						</div>
 
@@ -190,7 +202,7 @@ export function CreatePhysicalCopyDialog({
 									handleInputChange('current_condition', value as CopyCondition)
 								}
 							>
-								<SelectTrigger>
+								<SelectTrigger className="w-full">
 									<SelectValue placeholder="Chọn tình trạng" />
 								</SelectTrigger>
 								<SelectContent>
@@ -217,7 +229,7 @@ export function CreatePhysicalCopyDialog({
 							/>
 						</div>
 
-						<div className="space-y-2">
+						{/* <div className="space-y-2">
 							<div className="flex items-center space-x-2 pt-6">
 								<Checkbox
 									id="is_archived"
@@ -228,7 +240,7 @@ export function CreatePhysicalCopyDialog({
 								/>
 								<Label htmlFor="is_archived">Đã lưu trữ</Label>
 							</div>
-						</div>
+						</div> */}
 					</div>
 
 					{/* Details and Notes */}

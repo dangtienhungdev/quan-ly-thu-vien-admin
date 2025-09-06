@@ -1,19 +1,13 @@
 import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from '@/components/ui/card';
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import type { CopyCondition, CopyStatus } from '@/types';
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import {
 	AlertTriangle,
 	BookOpen,
@@ -22,19 +16,64 @@ import {
 	Plus,
 	Search,
 } from 'lucide-react';
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from '@/components/ui/card';
+import type {
+	CopyCondition,
+	CopyStatus,
+	CreatePhysicalCopyRequest,
+	PhysicalCopy,
+	UpdatePhysicalCopyRequest,
+} from '@/types';
+import { CreatePhysicalCopyForm, EditPhysicalCopyForm } from './components';
+import { LocationsAPI, PhysicalCopiesAPI } from '@/apis';
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@/components/ui/select';
+import {
+	Sheet,
+	SheetContent,
+	SheetHeader,
+	SheetTitle,
+	SheetTrigger,
+} from '@/components/ui/sheet';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useCallback, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { PhysicalCopiesAPI } from '@/apis';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { IconLoader2 } from '@tabler/icons-react';
 import { Input } from '@/components/ui/input';
-import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { toast } from 'sonner';
 
 export default function PhysicalCopiesPage() {
 	const [searchQuery, setSearchQuery] = useState('');
 	const [selectedStatus, setSelectedStatus] = useState<string>('all');
 	const [selectedCondition, setSelectedCondition] = useState<string>('all');
+	const [selectedLocation, setSelectedLocation] = useState<string>('all');
 	const [activeTab, setActiveTab] = useState('all');
+
+	// UI States
+	const [openCreateSheet, setOpenCreateSheet] = useState(false);
+	const [openEditSheet, setOpenEditSheet] = useState(false);
+	const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+	const [selectedCopy, setSelectedCopy] = useState<PhysicalCopy | null>(null);
+
+	// Fetch locations for dropdown
+	const { data: locationsData } = useQuery({
+		queryKey: ['locations-active'],
+		queryFn: () => LocationsAPI.getActiveLocations(),
+	});
 
 	// Fetch physical copies data
 	const { data: copiesData, isLoading: isLoadingCopies } = useQuery({
@@ -44,9 +83,15 @@ export default function PhysicalCopiesPage() {
 				search: searchQuery,
 				status: selectedStatus,
 				condition: selectedCondition,
+				location: selectedLocation,
 			},
 		],
-		queryFn: () => PhysicalCopiesAPI.getAll({ page: 1, limit: 20 }),
+		queryFn: () => {
+			if (searchQuery) {
+				return PhysicalCopiesAPI.search({ q: searchQuery, page: 1, limit: 20 });
+			}
+			return PhysicalCopiesAPI.getAll({ page: 1, limit: 20 });
+		},
 	});
 
 	// Fetch available copies
@@ -78,6 +123,101 @@ export default function PhysicalCopiesPage() {
 	const handleConditionFilter = (condition: string) => {
 		setSelectedCondition(condition);
 	};
+
+	const handleLocationFilter = (location: string) => {
+		setSelectedLocation(location);
+	};
+
+	// Mutations
+	const queryClient = useQueryClient();
+
+	const createCopyMutation = useMutation({
+		mutationFn: (data: CreatePhysicalCopyRequest) =>
+			PhysicalCopiesAPI.create(data),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['physical-copies'] });
+			queryClient.invalidateQueries({ queryKey: ['physical-copies-stats'] });
+			toast.success('Tạo bản sao thành công!');
+			setOpenCreateSheet(false);
+		},
+		onError: (error: unknown) => {
+			toast.error(
+				(error as any)?.response?.data?.message ||
+					'Có lỗi xảy ra khi tạo bản sao'
+			);
+		},
+	});
+
+	const updateCopyMutation = useMutation({
+		mutationFn: ({
+			id,
+			data,
+		}: {
+			id: string;
+			data: UpdatePhysicalCopyRequest;
+		}) => PhysicalCopiesAPI.update(id, data),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['physical-copies'] });
+			queryClient.invalidateQueries({ queryKey: ['physical-copies-stats'] });
+			toast.success('Cập nhật bản sao thành công!');
+			setOpenEditSheet(false);
+		},
+		onError: (error: unknown) => {
+			toast.error(
+				(error as any)?.response?.data?.message ||
+					'Có lỗi xảy ra khi cập nhật bản sao'
+			);
+		},
+	});
+
+	const deleteCopyMutation = useMutation({
+		mutationFn: (id: string) => PhysicalCopiesAPI.delete(id),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['physical-copies'] });
+			queryClient.invalidateQueries({ queryKey: ['physical-copies-stats'] });
+			toast.success('Xóa bản sao thành công!');
+			setOpenDeleteDialog(false);
+		},
+		onError: (error: unknown) => {
+			toast.error(
+				(error as any)?.response?.data?.message ||
+					'Có lỗi xảy ra khi xóa bản sao'
+			);
+		},
+	});
+
+	// Event handlers
+	const handleCreateCopy = useCallback(
+		(data: CreatePhysicalCopyRequest) => {
+			createCopyMutation.mutate(data);
+		},
+		[createCopyMutation]
+	);
+
+	const handleUpdateCopy = useCallback(
+		(data: UpdatePhysicalCopyRequest) => {
+			if (selectedCopy) {
+				updateCopyMutation.mutate({ id: selectedCopy.id, data });
+			}
+		},
+		[updateCopyMutation, selectedCopy]
+	);
+
+	const handleDeleteCopy = useCallback(() => {
+		if (selectedCopy) {
+			deleteCopyMutation.mutate(selectedCopy.id);
+		}
+	}, [deleteCopyMutation, selectedCopy]);
+
+	const handleEditCopy = useCallback((copy: PhysicalCopy) => {
+		setSelectedCopy(copy);
+		setOpenEditSheet(true);
+	}, []);
+
+	const handleDeleteClick = useCallback((copy: PhysicalCopy) => {
+		setSelectedCopy(copy);
+		setOpenDeleteDialog(true);
+	}, []);
 
 	const getStatusColor = (status: CopyStatus) => {
 		const colors: Record<CopyStatus, string> = {
@@ -135,10 +275,25 @@ export default function PhysicalCopiesPage() {
 						Quản lý và theo dõi các bản sao sách vật lý trong thư viện
 					</p>
 				</div>
-				<Button>
-					<Plus className="mr-2 h-4 w-4" />
-					Thêm Bản sao
-				</Button>
+				<Sheet open={openCreateSheet} onOpenChange={setOpenCreateSheet}>
+					<SheetTrigger asChild>
+						<Button>
+							<Plus className="mr-2 h-4 w-4" />
+							Thêm Bản sao
+						</Button>
+					</SheetTrigger>
+					<SheetContent side="right" className="w-[400px] sm:w-[540px]">
+						<SheetHeader>
+							<SheetTitle>Thêm bản sao mới</SheetTitle>
+						</SheetHeader>
+						<div className="px-4">
+							<CreatePhysicalCopyForm
+								onSubmit={handleCreateCopy}
+								isLoading={createCopyMutation.isPending}
+							/>
+						</div>
+					</SheetContent>
+				</Sheet>
 			</div>
 
 			{/* Statistics Cards */}
@@ -211,7 +366,7 @@ export default function PhysicalCopiesPage() {
 						<div className="relative">
 							<Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
 							<Input
-								placeholder="Tìm kiếm bản sao..."
+								placeholder="Tìm kiếm bản sao theo barcode, tên sách..."
 								value={searchQuery}
 								onChange={(e) => handleSearch(e.target.value)}
 								className="pl-8"
@@ -245,6 +400,19 @@ export default function PhysicalCopiesPage() {
 							<SelectItem value="good">Tốt</SelectItem>
 							<SelectItem value="worn">Cũ</SelectItem>
 							<SelectItem value="damaged">Hư hỏng</SelectItem>
+						</SelectContent>
+					</Select>
+					<Select value={selectedLocation} onValueChange={handleLocationFilter}>
+						<SelectTrigger className="w-[200px]">
+							<SelectValue placeholder="Vị trí" />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value="all">Tất cả vị trí</SelectItem>
+							{locationsData?.map((location) => (
+								<SelectItem key={location.id} value={location.id}>
+									{location.name}
+								</SelectItem>
+							))}
 						</SelectContent>
 					</Select>
 				</div>
@@ -289,7 +457,7 @@ export default function PhysicalCopiesPage() {
 												<span>Vị trí:</span>
 												<span className="flex items-center">
 													<MapPin className="mr-1 h-3 w-3" />
-													{copy.location}
+													{copy.location?.name || 'Chưa xác định'}
 												</span>
 											</div>
 											<div className="flex justify-between text-sm">
@@ -311,11 +479,20 @@ export default function PhysicalCopiesPage() {
 											)}
 										</div>
 										<div className="flex gap-2 mt-4">
-											<Button variant="outline" size="sm" className="flex-1">
-												Chi tiết
+											<Button
+												variant="outline"
+												size="sm"
+												className="flex-1"
+												onClick={() => handleEditCopy(copy)}
+											>
+												Chỉnh sửa
 											</Button>
-											<Button variant="outline" size="sm">
-												Cập nhật
+											<Button
+												variant="outline"
+												size="sm"
+												onClick={() => handleDeleteClick(copy)}
+											>
+												Xóa
 											</Button>
 										</div>
 									</CardContent>
@@ -359,7 +536,7 @@ export default function PhysicalCopiesPage() {
 											<span>Vị trí:</span>
 											<span className="flex items-center">
 												<MapPin className="mr-1 h-3 w-3" />
-												{copy.location}
+												{copy.location?.name || 'Chưa xác định'}
 											</span>
 										</div>
 										<div className="flex justify-between text-sm">
@@ -415,7 +592,7 @@ export default function PhysicalCopiesPage() {
 											<span>Vị trí:</span>
 											<span className="flex items-center">
 												<MapPin className="mr-1 h-3 w-3" />
-												{copy.location}
+												{copy.location?.name || 'Chưa xác định'}
 											</span>
 										</div>
 										{copy.condition_details && (
@@ -438,6 +615,49 @@ export default function PhysicalCopiesPage() {
 					</div>
 				</TabsContent>
 			</Tabs>
+
+			{/* Edit Physical Copy Sheet */}
+			<Sheet open={openEditSheet} onOpenChange={setOpenEditSheet}>
+				<SheetContent side="right" className="w-[400px] sm:w-[540px]">
+					<SheetHeader>
+						<SheetTitle>Chỉnh sửa bản sao</SheetTitle>
+					</SheetHeader>
+					<div className="px-4">
+						{selectedCopy && (
+							<EditPhysicalCopyForm
+								physicalCopy={selectedCopy}
+								onSubmit={handleUpdateCopy}
+								isLoading={updateCopyMutation.isPending}
+							/>
+						)}
+					</div>
+				</SheetContent>
+			</Sheet>
+
+			{/* Delete Confirmation Dialog */}
+			<AlertDialog open={openDeleteDialog} onOpenChange={setOpenDeleteDialog}>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>Xác nhận xóa bản sao</AlertDialogTitle>
+						<AlertDialogDescription>
+							Bạn có chắc chắn muốn xóa bản sao "{selectedCopy?.barcode}"? Hành
+							động này không thể hoàn tác.
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel>Hủy</AlertDialogCancel>
+						<AlertDialogAction
+							onClick={handleDeleteCopy}
+							disabled={deleteCopyMutation.isPending}
+						>
+							{deleteCopyMutation.isPending && (
+								<IconLoader2 className="mr-2 h-4 w-4 animate-spin" />
+							)}
+							Xóa
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
 		</div>
 	);
 }

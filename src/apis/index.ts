@@ -10,6 +10,7 @@ export { dashboardApi } from './dashboard';
 export { EBooksAPI } from './ebooks';
 export { FinesAPI } from './fines';
 export { GradeLevelsAPI } from './grade-levels';
+export { LocationsAPI } from './locations';
 export { NotificationsAPI } from './notifications';
 export { PhysicalCopiesAPI } from './physical-copies';
 export { PublishersAPI } from './publishers';

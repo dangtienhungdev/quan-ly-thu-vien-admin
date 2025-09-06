@@ -82,7 +82,7 @@ export const PhysicalCopiesAPI = {
 		params: PhysicalCopyLocationQuery
 	): Promise<PhysicalCopiesResponse> => {
 		const res = await instance.get(
-			`/api/physical-copies/location/${params.location}`,
+			`/api/physical-copies/location/${params.locationId}`,
 			{ params }
 		);
 		return res.data;

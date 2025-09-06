@@ -6,6 +6,7 @@ import {
 	Calendar,
 	Command,
 	Library,
+	MapPin,
 	PenTool,
 	Receipt,
 	User,
@@ -60,6 +61,11 @@ export const sidebarData: SidebarData = {
 					title: 'Quản lý thể loại',
 					icon: Library,
 					url: '/book-categories',
+				},
+				{
+					title: 'Quản lý vị trí kệ sách',
+					icon: MapPin,
+					url: '/locations',
 				},
 				{
 					title: 'Cài đặt quyền mượn sách',

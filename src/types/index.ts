@@ -74,3 +74,6 @@ export * from './uploads';
 
 // Export all types from notifications
 export * from './notifications';
+
+// Export all types from locations
+export * from './locations';

@@ -17,11 +17,12 @@ export interface PhysicalCopy extends BaseEntity {
 	condition_details?: string;
 	purchase_date: string;
 	purchase_price: number;
-	location: string;
+	location_id: string;
 	notes?: string;
 	last_checkup_date?: string;
 	is_archived: boolean;
 	book?: PhysicalCopyBookInfo;
+	location?: PhysicalCopyLocationInfo;
 }
 
 export interface PhysicalCopyBookInfo {
@@ -32,12 +33,21 @@ export interface PhysicalCopyBookInfo {
 	cover_image?: string;
 }
 
+export interface PhysicalCopyLocationInfo {
+	id: string;
+	name: string;
+	description?: string;
+	floor?: number;
+	section?: string;
+	shelf?: string;
+}
+
 export interface CreatePhysicalCopyRequest {
 	book_id: string;
 	barcode: string;
 	purchase_date: string;
 	purchase_price: number;
-	location: string;
+	location_id: string;
 	current_condition?: CopyCondition;
 	condition_details?: string;
 	notes?: string;
@@ -47,7 +57,7 @@ export interface UpdatePhysicalCopyRequest {
 	barcode?: string;
 	purchase_date?: string;
 	purchase_price?: number;
-	location?: string;
+	location_id?: string;
 	current_condition?: CopyCondition;
 	condition_details?: string;
 	notes?: string;
@@ -67,7 +77,7 @@ export interface CreateManyPhysicalCopiesRequest {
 	count: number;
 	purchase_date: string;
 	purchase_price: number;
-	location: string;
+	location_id: string;
 }
 
 export interface PhysicalCopySearchQuery {
@@ -89,7 +99,7 @@ export interface PhysicalCopyConditionQuery {
 }
 
 export interface PhysicalCopyLocationQuery {
-	location: string;
+	locationId: string;
 	page?: number;
 	limit?: number;
 }
