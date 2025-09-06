@@ -348,7 +348,7 @@ const ReaderTypesPage = () => {
 				{/* {meta && (
 					<div className="mt-4 space-y-4">
 						<div className="text-sm text-muted-foreground text-center">
-							Showing {readerTypes.length} of {meta.totalItems} reader types
+							HIển thị{readerTypes.length} of {meta.totalItems} reader types
 							{meta.totalPages > 1 && (
 								<span>
 									{' '}

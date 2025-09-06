@@ -9,16 +9,7 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import type { Book, CreateBookRequest, UpdateBookRequest } from '@/types/books';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import {
-	IconEdit,
-	IconEye,
-	IconPlus,
-	IconRefresh,
-	IconSearch,
-	IconTrash,
-} from '@tabler/icons-react';
 import {
 	Select,
 	SelectContent,
@@ -42,22 +33,31 @@ import {
 	TableRow,
 } from '@/components/ui/table';
 import { useBooks, useSearchBooks, useUpdateBook } from '@/hooks/books';
+import type { Book, CreateBookRequest, UpdateBookRequest } from '@/types/books';
+import {
+	IconEdit,
+	IconEye,
+	IconPlus,
+	IconRefresh,
+	IconSearch,
+	IconTrash,
+} from '@tabler/icons-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { Badge } from '@/components/ui/badge';
-import BookCover from '@/components/book-cover';
 import { BooksAPI } from '@/apis/books';
-import { Button } from '@/components/ui/button';
-import CreateBookForm from './components/create-book-form';
-import EditBookForm from './components/edit-book-form';
-import { Input } from '@/components/ui/input';
+import BookCover from '@/components/book-cover';
 import PaginationWrapper from '@/components/pagination-wrapper';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { toast } from 'sonner';
 import { useAuthors } from '@/hooks/authors';
 import { useCategories } from '@/hooks/categories';
 import { usePublishers } from '@/hooks/publishers';
 import { useState } from 'react';
+import { toast } from 'sonner';
+import CreateBookForm from './components/create-book-form';
+import EditBookForm from './components/edit-book-form';
 
 const BooksPage = () => {
 	const [queryParams] = useSearchParams();
@@ -552,11 +552,11 @@ const BooksPage = () => {
 				{currentMeta && (
 					<div className="mt-4 space-y-4 flex items-center justify-between">
 						<div className="text-sm text-muted-foreground text-center">
-							Showing {currentBooks.length} of {currentMeta.totalItems} books
+							Hiển thị {currentBooks.length} trên {currentMeta.totalItems} sách
 							{currentMeta.totalPages > 1 && (
 								<span>
 									{' '}
-									(Page {currentMeta.page} of {currentMeta.totalPages})
+									(Trang {currentMeta.page} trên {currentMeta.totalPages})
 								</span>
 							)}
 						</div>

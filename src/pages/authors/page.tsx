@@ -199,13 +199,13 @@ const AuthorsPage = () => {
 								</>
 							) : (
 								<>
-									Showing {authors.length} of {meta.totalItems} authors
+									HIển thị {authors.length} trên {meta.totalItems} tác giả
 								</>
 							)}
 							{meta.totalPages > 1 && (
 								<span>
 									{' '}
-									(Page {meta.page} of {meta.totalPages})
+									(Trang {meta.page} trên {meta.totalPages})
 								</span>
 							)}
 						</div>

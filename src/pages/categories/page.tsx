@@ -43,6 +43,7 @@ import {
 	IconRefresh,
 	IconTrash,
 } from '@tabler/icons-react';
+import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { CategoriesAPI } from '@/apis/categories';
@@ -50,7 +51,6 @@ import PaginationWrapper from '@/components/pagination-wrapper';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import React, { useState } from 'react';
 import { toast } from 'sonner';
 import CreateCategoryForm from './components/create-category-form';
 import EditCategoryForm from './components/edit-category-form';
@@ -403,11 +403,11 @@ const CategoriesPage = () => {
 				{meta && (
 					<div className="mt-4 space-y-4 flex items-center justify-between">
 						<div className="text-sm text-muted-foreground text-center">
-							Showing {categories.length} of {meta.totalItems} categories
+							Hiển thị {categories.length} trên {meta.totalItems} danh mục
 							{meta.totalPages > 1 && (
 								<span>
 									{' '}
-									(Page {meta.page} of {meta.totalPages})
+									(Trang {meta.page} trên {meta.totalPages})
 								</span>
 							)}
 						</div>

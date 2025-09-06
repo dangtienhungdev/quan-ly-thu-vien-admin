@@ -506,11 +506,11 @@ const PublishersPage = () => {
 				{meta && (
 					<div className="mt-4 space-y-4 flex items-center justify-between">
 						<div className="text-sm text-muted-foreground text-center">
-							Showing {publishers.length} of {meta.totalItems} publishers
+							Hiển thị {publishers.length} trên {meta.totalItems} nhà xuất bản
 							{meta.totalPages > 1 && (
 								<span>
 									{' '}
-									(Page {meta.page} of {meta.totalPages})
+									(Trang {meta.page} trên {meta.totalPages})
 								</span>
 							)}
 						</div>

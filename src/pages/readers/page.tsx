@@ -10,20 +10,6 @@ import {
 	AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import type {
-	CreateReaderRequest,
-	Reader,
-	UpdateReaderRequest,
-} from '@/types/readers';
-import {
-	IconCalendar,
-	IconCheck,
-	IconEdit,
-	IconRefresh,
-	IconSearch,
-	IconTrash,
-	IconX,
-} from '@tabler/icons-react';
 import {
 	Sheet,
 	SheetContent,
@@ -46,18 +32,32 @@ import {
 	useSearchReaders,
 	useUpdateReader,
 } from '@/hooks/readers';
+import type {
+	CreateReaderRequest,
+	Reader,
+	UpdateReaderRequest,
+} from '@/types/readers';
+import {
+	IconCalendar,
+	IconCheck,
+	IconEdit,
+	IconRefresh,
+	IconSearch,
+	IconTrash,
+	IconX,
+} from '@tabler/icons-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { ReadersAPI } from '@/apis/readers';
+import PaginationWrapper from '@/components/pagination-wrapper';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useState } from 'react';
+import { toast } from 'sonner';
 import CreateReaderForm from './components/create-reader-form';
 import EditReaderForm from './components/edit-reader-form';
-import { Input } from '@/components/ui/input';
-import PaginationWrapper from '@/components/pagination-wrapper';
-import { ReadersAPI } from '@/apis/readers';
-import { Skeleton } from '@/components/ui/skeleton';
-import { toast } from 'sonner';
-import { useState } from 'react';
 
 const ReadersPage = () => {
 	const [queryParams] = useSearchParams();
@@ -852,12 +852,13 @@ const ReadersPage = () => {
 			{currentData.meta && (
 				<div className="mt-4 space-y-4 flex items-center justify-between">
 					<div className="text-sm text-muted-foreground text-center">
-						Showing {currentData.readers.length} of{' '}
+						Hiển thị {currentData.readers.length} trên{' '}
 						{currentData.meta.totalItems} readers
 						{currentData.meta.totalPages > 1 && (
 							<span>
 								{' '}
-								(Page {currentData.meta.page} of {currentData.meta.totalPages})
+								(Trang {currentData.meta.page} trên{' '}
+								{currentData.meta.totalPages})
 							</span>
 						)}
 					</div>

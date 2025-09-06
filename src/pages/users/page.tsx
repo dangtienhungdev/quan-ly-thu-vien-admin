@@ -205,12 +205,12 @@ const UserPage = () => {
 				{currentMeta && (
 					<div className="mt-4 space-y-4 flex items-center justify-between">
 						<div className="text-sm text-muted-foreground text-center">
-							Showing {currentData.length} of {currentMeta.totalItems}{' '}
+							Hiển thị {currentData.length} of {currentMeta.totalItems}{' '}
 							{isReaderView ? 'readers' : 'users'}
 							{currentMeta.totalPages > 1 && (
 								<span>
 									{' '}
-									(Page {currentMeta.page} of {currentMeta.totalPages})
+									(Trang {currentMeta.page} trên {currentMeta.totalPages})
 								</span>
 							)}
 						</div>
