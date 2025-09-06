@@ -469,7 +469,7 @@ const BooksPage = () => {
 												{book.title}
 											</button>
 											{book.description && (
-												<span className="text-sm text-muted-foreground line-clamp-2">
+												<span className="text-sm text-muted-foreground line-clamp-1 truncate w-[150px]">
 													{book.description}
 												</span>
 											)}
