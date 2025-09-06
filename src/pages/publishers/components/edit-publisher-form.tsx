@@ -9,12 +9,14 @@ import {
 import type { Publisher, UpdatePublisherRequest } from '@/types/publishers';
 
 import { Button } from '@/components/ui/button';
+import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { countries } from '@/data/countries';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
 
 const updatePublisherSchema = z.object({
 	publisherName: z
@@ -37,7 +39,7 @@ const updatePublisherSchema = z.object({
 		.optional()
 		.or(z.literal('')),
 	description: z.string().optional(),
-	country: z.string().max(100, 'Quốc gia tối đa 100 ký tự').optional(),
+	country: z.string().optional(),
 	establishedDate: z.string().optional(),
 	isActive: z.boolean(),
 });
@@ -57,6 +59,12 @@ const EditPublisherForm = ({
 	onCancel,
 	isLoading = false,
 }: EditPublisherFormProps) => {
+	// Find country code from country name
+	const getCountryCode = (countryName: string) => {
+		const country = countries.find((c) => c.label === countryName);
+		return country ? country.value : '';
+	};
+
 	const form = useForm<UpdatePublisherFormData>({
 		resolver: zodResolver(updatePublisherSchema),
 		defaultValues: {
@@ -66,18 +74,24 @@ const EditPublisherForm = ({
 			email: publisher.email,
 			website: publisher.website || '',
 			description: publisher.description || '',
-			country: publisher.country || '',
+			country: getCountryCode(publisher.country || ''),
 			establishedDate: publisher.establishedDate || '',
 			isActive: publisher.isActive,
 		},
 	});
 
 	const handleSubmit = (data: UpdatePublisherFormData) => {
+		// Convert country code to country name
+		const selectedCountry = countries.find(
+			(country) => country.value === data.country
+		);
+		const countryName = selectedCountry ? selectedCountry.label : data.country;
+
 		onSubmit({
 			...data,
 			website: data.website || undefined,
 			description: data.description || undefined,
-			country: data.country || undefined,
+			country: countryName || undefined,
 			establishedDate: data.establishedDate || undefined,
 		});
 	};
@@ -166,7 +180,15 @@ const EditPublisherForm = ({
 						<FormItem>
 							<FormLabel>Quốc gia</FormLabel>
 							<FormControl>
-								<Input placeholder="Nhập quốc gia" {...field} />
+								<Combobox
+									options={countries}
+									value={field.value}
+									onValueChange={field.onChange}
+									placeholder="Chọn quốc gia..."
+									searchPlaceholder="Tìm kiếm quốc gia..."
+									emptyText="Không tìm thấy quốc gia nào"
+									disabled={isLoading}
+								/>
 							</FormControl>
 							<FormMessage />
 						</FormItem>

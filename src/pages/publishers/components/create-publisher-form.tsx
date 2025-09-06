@@ -8,13 +8,15 @@ import {
 } from '@/components/ui/form';
 
 import { Button } from '@/components/ui/button';
-import type { CreatePublisherRequest } from '@/types/publishers';
+import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { countries } from '@/data/countries';
+import type { CreatePublisherRequest } from '@/types/publishers';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
 
 const createPublisherSchema = z.object({
 	publisherName: z
@@ -37,7 +39,7 @@ const createPublisherSchema = z.object({
 		.optional()
 		.or(z.literal('')),
 	description: z.string().optional(),
-	country: z.string().max(100, 'Quốc gia tối đa 100 ký tự').optional(),
+	country: z.string().optional(),
 	establishedDate: z.string().optional(),
 	isActive: z.boolean(),
 });
@@ -71,13 +73,21 @@ const CreatePublisherForm = ({
 	});
 
 	const handleSubmit = (data: CreatePublisherFormData) => {
+		// Convert country code to country name
+		const selectedCountry = countries.find(
+			(country) => country.value === data.country
+		);
+		const countryName = selectedCountry ? selectedCountry.label : data.country;
+
 		onSubmit({
 			...data,
 			website: data.website || undefined,
 			description: data.description || undefined,
-			country: data.country || undefined,
+			country: countryName || undefined,
 			establishedDate: data.establishedDate || undefined,
 		});
+		// Reset form after successful submission
+		form.reset();
 	};
 
 	return (
@@ -164,7 +174,15 @@ const CreatePublisherForm = ({
 						<FormItem>
 							<FormLabel>Quốc gia</FormLabel>
 							<FormControl>
-								<Input placeholder="Nhập quốc gia" {...field} />
+								<Combobox
+									options={countries}
+									value={field.value}
+									onValueChange={field.onChange}
+									placeholder="Chọn quốc gia..."
+									searchPlaceholder="Tìm kiếm quốc gia..."
+									emptyText="Không tìm thấy quốc gia nào"
+									disabled={isLoading}
+								/>
 							</FormControl>
 							<FormMessage />
 						</FormItem>
