@@ -64,6 +64,7 @@ export interface PaginationQuery {
 	limit?: number;
 	type?: 'physical' | 'ebook';
 	search?: string;
+	q?: string;
 }
 
 export interface SearchQuery extends PaginationQuery {

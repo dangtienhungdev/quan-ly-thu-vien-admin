@@ -1,4 +1,3 @@
-import type { Author, UpdateAuthorRequest } from '@/types/authors';
 import {
 	Form,
 	FormControl,
@@ -7,13 +6,16 @@ import {
 	FormLabel,
 	FormMessage,
 } from '@/components/ui/form';
+import type { Author, UpdateAuthorRequest } from '@/types/authors';
 
 import { Button } from '@/components/ui/button';
+import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { countries } from '@/data/countries';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
 
 const updateAuthorSchema = z.object({
 	author_name: z
@@ -21,10 +23,7 @@ const updateAuthorSchema = z.object({
 		.min(1, 'Tên tác giả là bắt buộc')
 		.max(255, 'Tên tác giả tối đa 255 ký tự'),
 	bio: z.string().optional(),
-	nationality: z
-		.string()
-		.min(1, 'Quốc tịch là bắt buộc')
-		.max(100, 'Quốc tịch tối đa 100 ký tự'),
+	nationality: z.string().min(1, 'Quốc tịch là bắt buộc'),
 });
 
 type UpdateAuthorFormData = z.infer<typeof updateAuthorSchema>;
@@ -42,18 +41,33 @@ const EditAuthorForm = ({
 	onCancel,
 	isLoading = false,
 }: EditAuthorFormProps) => {
+	// Find country code from country name
+	const getCountryCode = (countryName: string) => {
+		const country = countries.find((c) => c.label === countryName);
+		return country ? country.value : '';
+	};
+
 	const form = useForm<UpdateAuthorFormData>({
 		resolver: zodResolver(updateAuthorSchema),
 		defaultValues: {
 			author_name: author.author_name,
 			bio: author.bio || '',
-			nationality: author.nationality,
+			nationality: getCountryCode(author.nationality),
 		},
 	});
 
 	const handleSubmit = (data: UpdateAuthorFormData) => {
+		// Convert country code to country name
+		const selectedCountry = countries.find(
+			(country) => country.value === data.nationality
+		);
+		const nationalityName = selectedCountry
+			? selectedCountry.label
+			: data.nationality;
+
 		onSubmit({
 			...data,
+			nationality: nationalityName,
 			bio: data.bio || undefined,
 		});
 	};
@@ -82,7 +96,15 @@ const EditAuthorForm = ({
 						<FormItem>
 							<FormLabel>Quốc tịch *</FormLabel>
 							<FormControl>
-								<Input placeholder="Nhập quốc tịch" {...field} />
+								<Combobox
+									options={countries}
+									value={field.value}
+									onValueChange={field.onChange}
+									placeholder="Chọn quốc tịch..."
+									searchPlaceholder="Tìm kiếm quốc gia..."
+									emptyText="Không tìm thấy quốc gia nào"
+									disabled={isLoading}
+								/>
 							</FormControl>
 							<FormMessage />
 						</FormItem>

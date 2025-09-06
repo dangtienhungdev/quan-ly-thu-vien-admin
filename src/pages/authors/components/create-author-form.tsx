@@ -8,12 +8,14 @@ import {
 } from '@/components/ui/form';
 
 import { Button } from '@/components/ui/button';
-import type { CreateAuthorRequest } from '@/types/authors';
+import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { countries } from '@/data/countries';
+import type { CreateAuthorRequest } from '@/types/authors';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
 
 const createAuthorSchema = z.object({
 	author_name: z
@@ -21,10 +23,7 @@ const createAuthorSchema = z.object({
 		.min(1, 'Tên tác giả là bắt buộc')
 		.max(255, 'Tên tác giả tối đa 255 ký tự'),
 	bio: z.string().optional(),
-	nationality: z
-		.string()
-		.min(1, 'Quốc tịch là bắt buộc')
-		.max(100, 'Quốc tịch tối đa 100 ký tự'),
+	nationality: z.string().min(1, 'Quốc tịch là bắt buộc'),
 });
 
 type CreateAuthorFormData = z.infer<typeof createAuthorSchema>;
@@ -50,10 +49,21 @@ const CreateAuthorForm = ({
 	});
 
 	const handleSubmit = (data: CreateAuthorFormData) => {
+		// Convert country code to country name
+		const selectedCountry = countries.find(
+			(country) => country.value === data.nationality
+		);
+		const nationalityName = selectedCountry
+			? selectedCountry.label
+			: data.nationality;
+
 		onSubmit({
 			...data,
+			nationality: nationalityName,
 			bio: data.bio || undefined,
 		});
+		// Reset form after successful submission
+		form.reset();
 	};
 
 	return (
@@ -80,7 +90,15 @@ const CreateAuthorForm = ({
 						<FormItem>
 							<FormLabel>Quốc tịch *</FormLabel>
 							<FormControl>
-								<Input placeholder="Nhập quốc tịch" {...field} />
+								<Combobox
+									options={countries}
+									value={field.value}
+									onValueChange={field.onChange}
+									placeholder="Chọn quốc tịch..."
+									searchPlaceholder="Tìm kiếm quốc gia..."
+									emptyText="Không tìm thấy quốc gia nào"
+									disabled={isLoading}
+								/>
 							</FormControl>
 							<FormMessage />
 						</FormItem>
