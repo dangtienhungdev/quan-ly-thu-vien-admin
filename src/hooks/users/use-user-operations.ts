@@ -5,12 +5,14 @@ import type {
 } from '@/types/user.type';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
+import { ReadersAPI } from '@/apis';
 import { UsersAPI } from '@/apis/users';
-import { useState } from 'react';
 import { toast } from 'sonner';
+import { useState } from 'react';
 
 interface UserToDelete {
 	id: string;
+	readerId: string;
 	userCode: string;
 	username: string;
 }
@@ -46,7 +48,14 @@ export const useUserOperations = () => {
 				} thành công! Mã: ${newUser.userCode}`
 			);
 			setIsCreateSheetOpen(false);
+			// Invalidate both users and readers queries to refetch data
 			queryClient.invalidateQueries({ queryKey: ['users'] });
+			queryClient.invalidateQueries({ queryKey: ['readers'] });
+			// Also invalidate any queries that might be using these keys
+			queryClient.invalidateQueries({
+				predicate: (query) =>
+					query.queryKey[0] === 'users' || query.queryKey[0] === 'readers',
+			});
 		},
 		onError: (error: Error) => {
 			toast.error(error.message || 'Có lỗi xảy ra khi tạo người dùng');
@@ -55,14 +64,21 @@ export const useUserOperations = () => {
 
 	// Import users mutation
 	const importUsersMutation = useMutation({
-		mutationFn: (transformedData: any[]) =>
+		mutationFn: (transformedData: CreateUserRequest[]) =>
 			UsersAPI.createMultiple({ users: transformedData }),
 		onSuccess: (result) => {
 			toast.success(
 				`Import thành công ${result.successCount}/${result.totalUsers} người dùng!`
 			);
 			setIsImportSheetOpen(false);
+			// Invalidate both users and readers queries to refetch data
 			queryClient.invalidateQueries({ queryKey: ['users'] });
+			queryClient.invalidateQueries({ queryKey: ['readers'] });
+			// Also invalidate any queries that might be using these keys
+			queryClient.invalidateQueries({
+				predicate: (query) =>
+					query.queryKey[0] === 'users' || query.queryKey[0] === 'readers',
+			});
 		},
 		onError: (error: Error) => {
 			toast.error(error.message || 'Có lỗi xảy ra khi import người dùng');
@@ -77,7 +93,14 @@ export const useUserOperations = () => {
 			toast.success(`Cập nhật người dùng ${data.userCode} thành công!`);
 			setIsEditSheetOpen(false);
 			setUserToEdit(null);
+			// Invalidate both users and readers queries to refetch data
 			queryClient.invalidateQueries({ queryKey: ['users'] });
+			queryClient.invalidateQueries({ queryKey: ['readers'] });
+			// Also invalidate any queries that might be using these keys
+			queryClient.invalidateQueries({
+				predicate: (query) =>
+					query.queryKey[0] === 'users' || query.queryKey[0] === 'readers',
+			});
 		},
 		onError: (error: Error) => {
 			toast.error(error.message || 'Có lỗi xảy ra khi cập nhật người dùng');
@@ -87,11 +110,19 @@ export const useUserOperations = () => {
 	// Delete user mutation
 	const deleteUserMutation = useMutation({
 		mutationFn: (id: string) => UsersAPI.delete(id),
-		onSuccess: () => {
+		onSuccess: (response) => {
+			console.log('🚀 ~ useUserOperations ~ response:', response);
 			toast.success(`Xóa người dùng ${userToDelete?.userCode} thành công!`);
 			setIsDeleteDialogOpen(false);
 			setUserToDelete(null);
+			// Invalidate both users and readers queries to refetch data
 			queryClient.invalidateQueries({ queryKey: ['users'] });
+			queryClient.invalidateQueries({ queryKey: ['readers'] });
+			// Also invalidate any queries that might be using these keys
+			queryClient.invalidateQueries({
+				predicate: (query) =>
+					query.queryKey[0] === 'users' || query.queryKey[0] === 'readers',
+			});
 		},
 		onError: (error: Error) => {
 			toast.error(error.message || 'Có lỗi xảy ra khi xóa người dùng');
@@ -103,7 +134,7 @@ export const useUserOperations = () => {
 		createUserMutation.mutate(data);
 	};
 
-	const handleImportUsers = (transformedData: any[]) => {
+	const handleImportUsers = (transformedData: CreateUserRequest[]) => {
 		importUsersMutation.mutate(transformedData);
 	};
 
@@ -112,9 +143,33 @@ export const useUserOperations = () => {
 		updateUserMutation.mutate({ id: userToEdit.id, data });
 	};
 
-	const handleDeleteUser = () => {
+	const handleDeleteUser = async () => {
 		if (!userToDelete) return;
-		deleteUserMutation.mutate(userToDelete.id);
+		try {
+			// get reader by user id
+			const reader = await ReadersAPI.getByUserId(userToDelete.id);
+			console.log('🚀 ~ handleDeleteUser ~ reader:', reader);
+
+			await Promise.all([
+				ReadersAPI.delete(reader.id),
+				UsersAPI.delete(userToDelete.id),
+			]);
+
+			toast.success(`Xóa người dùng ${userToDelete.userCode} thành công!`);
+			setIsDeleteDialogOpen(false);
+			setUserToDelete(null);
+			// Invalidate both users and readers queries to refetch data
+			queryClient.invalidateQueries({ queryKey: ['users'] });
+			queryClient.invalidateQueries({ queryKey: ['readers'] });
+			// Also invalidate any queries that might be using these keys
+			queryClient.invalidateQueries({
+				predicate: (query) =>
+					query.queryKey[0] === 'users' || query.queryKey[0] === 'readers',
+			});
+		} catch {
+			// delete user if reader not found
+			deleteUserMutation.mutate(userToDelete.id);
+		}
 	};
 
 	const openDeleteDialog = (user: UserToDelete) => {

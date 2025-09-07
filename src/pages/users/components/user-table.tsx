@@ -1,3 +1,4 @@
+import { IconEdit, IconTrash } from '@tabler/icons-react';
 import {
 	Table,
 	TableBody,
@@ -12,7 +13,6 @@ import {
 	getRoleBadgeVariant,
 	getStatusBadgeVariant,
 } from '@/utils/user-utils';
-import { IconEdit, IconTrash } from '@tabler/icons-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -37,6 +37,7 @@ interface UserTableProps {
 	onEditUser: (user: UserOrReader) => void;
 	onDeleteUser: (user: {
 		id: string;
+		readerId: string;
 		userCode: string;
 		username: string;
 	}) => void;
@@ -169,7 +170,8 @@ export const UserTable = memo<UserTableProps>(
 											size="sm"
 											onClick={() =>
 												onDeleteUser({
-													id: user.id,
+													id: isReader ? user.user?.id || '' : user.id,
+													readerId: isReader ? user.id : '',
 													userCode: isReader
 														? reader?.user?.userCode || ''
 														: (user as User).userCode,

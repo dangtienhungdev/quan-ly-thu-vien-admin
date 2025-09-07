@@ -44,7 +44,7 @@ export const DeleteConfirmDialog = memo<DeleteConfirmDialogProps>(
 						<AlertDialogAction
 							onClick={onConfirm}
 							disabled={isDeleting}
-							className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+							className="bg-destructive text-white hover:bg-destructive/90"
 						>
 							{isDeleting ? 'Đang xóa...' : 'Xóa'}
 						</AlertDialogAction>
