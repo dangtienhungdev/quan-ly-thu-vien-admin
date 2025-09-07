@@ -1,270 +1,252 @@
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import {
-	AlertDialog,
-	AlertDialogAction,
-	AlertDialogCancel,
-	AlertDialogContent,
-	AlertDialogDescription,
-	AlertDialogFooter,
-	AlertDialogHeader,
-	AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { Card, CardContent } from '@/components/ui/card';
-import {
-	Sheet,
-	SheetContent,
-	SheetHeader,
-	SheetTitle,
-} from '@/components/ui/sheet';
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
-} from '@/components/ui/table';
+import type {
+	CreateBookCategoryRequest,
+	UpdateBookCategoryRequest,
+} from '@/types/book-categories';
+import { createSearchParams, useNavigate } from 'react-router-dom';
 import {
 	useBookCategories,
 	useCreateBookCategory,
 	useDeleteBookCategory,
 	useUpdateBookCategory,
 } from '@/hooks/book-categories';
-import type {
-	BookCategory,
-	CreateBookCategoryRequest,
-	UpdateBookCategoryRequest,
-} from '@/types/book-categories';
-import { IconEdit, IconTrash } from '@tabler/icons-react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import BookCategoriesErrorState from './components/book-categories-error-state';
+import BookCategoriesLoadingSkeleton from './components/book-categories-loading-skeleton';
+import BookCategoriesPageHeader from './components/book-categories-page-header';
+import BookCategoriesSearch from './components/book-categories-search';
+import BookCategoriesTable from './components/book-categories-table';
+import DeleteBookCategoryDialog from './components/delete-book-category-dialog';
+import EditBookCategorySheet from './components/edit-book-category-sheet';
+// Components
 import PaginationWrapper from '@/components/pagination-wrapper';
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Plus } from 'lucide-react';
-import { useState } from 'react';
-import CreateBookCategoryForm from './components/create-book-category-form';
-import EditBookCategoryForm from './components/edit-book-category-form';
+import SearchStats from './components/search-stats';
+import { useBookCategoriesPageState } from './hooks/use-book-categories-page-state';
+import { useCallback } from 'react';
+import { useQueryParams } from '@/hooks/useQueryParam';
 
 const BookCategoriesPage = () => {
-	const [queryParams] = useSearchParams();
 	const navigate = useNavigate();
-	const page = queryParams.get('page');
-	const limit = queryParams.get('limit');
+	const queryParams = useQueryParams();
+	const { page, limit, q } = queryParams;
 
-	const [isCreateSheetOpen, setIsCreateSheetOpen] = useState(false);
-	const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
-	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+	// Custom hooks for state management
+	const {
+		isCreateSheetOpen,
+		openCreateSheet,
+		closeCreateSheet,
+		isDeleteDialogOpen,
+		categoryToDelete,
+		openDeleteDialog,
+		closeDeleteDialog,
+		isEditSheetOpen,
+		categoryToEdit,
+		openEditSheet,
+		closeEditSheet,
+	} = useBookCategoriesPageState();
 
-	const [categoryToEdit, setCategoryToEdit] = useState<BookCategory | null>(
-		null
-	);
-	const [categoryToDelete, setCategoryToDelete] = useState<BookCategory | null>(
-		null
-	);
-
+	// Data fetching
 	const { bookCategories, meta, isLoading, isError, error, refetch } =
 		useBookCategories({
 			params: {
 				page: page ? Number(page) : 1,
 				limit: limit ? Number(limit) : 10,
+				q: q || undefined,
 			},
 		});
 
+	// Mutations
 	const { createBookCategory, isCreating } = useCreateBookCategory({
 		onSuccess: () => {
-			setIsCreateSheetOpen(false);
-			refetch();
+			closeCreateSheet();
 		},
 	});
 
 	const { updateBookCategory, isUpdating } = useUpdateBookCategory({
 		onSuccess: () => {
-			setIsEditSheetOpen(false);
-			setCategoryToEdit(null);
+			closeEditSheet();
 		},
 	});
 
 	const { deleteBookCategory, isDeleting } = useDeleteBookCategory({
 		onSuccess: () => {
-			setIsDeleteDialogOpen(false);
-			setCategoryToDelete(null);
+			closeDeleteDialog();
 		},
 	});
 
-	const handleCreate = (data: CreateBookCategoryRequest) => {
-		createBookCategory(data);
-	};
+	// Event handlers with useCallback for performance optimization
+	const handleCreateCategory = useCallback(
+		(data: CreateBookCategoryRequest) => {
+			createBookCategory(data);
+		},
+		[createBookCategory]
+	);
 
-	const openEdit = (c: BookCategory) => {
-		setCategoryToEdit(c);
-		setIsEditSheetOpen(true);
-	};
+	const handleUpdateCategory = useCallback(
+		(data: UpdateBookCategoryRequest) => {
+			if (!categoryToEdit) return;
+			updateBookCategory({ id: categoryToEdit.id, data });
+		},
+		[categoryToEdit, updateBookCategory]
+	);
 
-	const handleUpdate = (data: UpdateBookCategoryRequest) => {
-		if (!categoryToEdit) return;
-		updateBookCategory({ id: categoryToEdit.id, data });
-	};
-
-	const openDelete = (c: BookCategory) => {
-		setCategoryToDelete(c);
-		setIsDeleteDialogOpen(true);
-	};
-
-	const handleDelete = () => {
+	const handleDeleteCategory = useCallback(() => {
 		if (!categoryToDelete) return;
 		deleteBookCategory(categoryToDelete.id);
-	};
+	}, [categoryToDelete, deleteBookCategory]);
+
+	const handlePageChange = useCallback(
+		(newPage: number) => {
+			navigate({
+				pathname: '/book-categories',
+				search: createSearchParams({
+					...queryParams,
+					page: newPage.toString(),
+				}).toString(),
+			});
+		},
+		[navigate, queryParams]
+	);
+
+	const handleSearchChange = useCallback(
+		(searchQuery: string) => {
+			const newParams = { ...queryParams };
+			if (searchQuery) {
+				newParams.q = searchQuery;
+			} else {
+				delete newParams.q;
+			}
+			newParams.page = '1'; // Reset to first page when searching
+
+			navigate({
+				pathname: '/book-categories',
+				search: createSearchParams(newParams).toString(),
+			});
+		},
+		[navigate, queryParams]
+	);
+
+	const handleClearSearch = useCallback(() => {
+		const newParams = { ...queryParams };
+		delete newParams.q;
+		newParams.page = '1'; // Reset to first page when clearing search
+
+		navigate({
+			pathname: '/book-categories',
+			search: createSearchParams(newParams).toString(),
+		});
+	}, [navigate, queryParams]);
+
+	const handleCreateSheetOpenChange = useCallback(
+		(open: boolean) => {
+			if (open) {
+				openCreateSheet();
+			} else {
+				closeCreateSheet();
+			}
+		},
+		[openCreateSheet, closeCreateSheet]
+	);
+
+	// Loading state
+	if (isLoading) {
+		return <BookCategoriesLoadingSkeleton />;
+	}
+
+	// Error state
+	if (isError) {
+		return <BookCategoriesErrorState error={error} onRetry={refetch} />;
+	}
 
 	return (
-		<div className="space-y-6">
-			{/* Header */}
-			<div className="flex justify-between items-center">
-				<div>
-					<h1 className="text-3xl font-bold">Quản lý Thể loại chi tiết</h1>
-					<p className="text-muted-foreground">
-						Tổ chức danh mục thể loại có phân cấp cha/con
-					</p>
-				</div>
-				<Button onClick={() => setIsCreateSheetOpen(true)}>
-					<Plus className="mr-2 h-4 w-4" />
-					Thêm thể loại
-				</Button>
-			</div>
+		<>
+			<BookCategoriesPageHeader
+				isCreateSheetOpen={isCreateSheetOpen}
+				onCreateSheetOpenChange={handleCreateSheetOpenChange}
+				onCreateCategory={handleCreateCategory}
+				onCloseCreateSheet={closeCreateSheet}
+				isCreating={isCreating}
+				categories={(bookCategories || []).filter((c) => !c.parent_id)}
+			/>
 
-			<Card>
-				<CardContent>
-					{isLoading ? (
-						<div className="space-y-2">
-							<Skeleton className="h-10 w-full" />
-							<Skeleton className="h-10 w-full" />
-							<Skeleton className="h-10 w-full" />
+			<BookCategoriesSearch
+				searchQuery={q || ''}
+				onSearchChange={handleSearchChange}
+				onClearSearch={handleClearSearch}
+			/>
+
+			{meta && q && (
+				<SearchStats
+					searchQuery={q}
+					totalResults={meta.totalItems}
+					currentPage={meta.page}
+					totalPages={meta.totalPages}
+					itemsPerPage={meta.limit}
+				/>
+			)}
+
+			<div>
+				<BookCategoriesTable
+					categories={bookCategories}
+					onEdit={openEditSheet}
+					onDelete={openDeleteDialog}
+					searchQuery={q}
+				/>
+
+				{meta && (
+					<div className="mt-4 space-y-4 flex items-center justify-between">
+						<div className="text-sm text-muted-foreground text-center">
+							{q ? (
+								<>
+									Tìm thấy {bookCategories.length} thể loại cho "{q}"
+									{meta.totalItems > 0 && (
+										<span> (tổng {meta.totalItems} kết quả)</span>
+									)}
+								</>
+							) : (
+								<>
+									Hiển thị {bookCategories.length} trên {meta.totalItems} thể
+									loại
+								</>
+							)}
+							{meta.totalPages > 1 && (
+								<span>
+									{' '}
+									(Trang {meta.page} trên {meta.totalPages})
+								</span>
+							)}
 						</div>
-					) : isError ? (
-						<Alert variant="destructive">
-							<AlertDescription>{(error as Error)?.message}</AlertDescription>
-						</Alert>
-					) : (
-						<>
-							<Table>
-								<TableHeader>
-									<TableRow>
-										<TableHead>Tên thể loại</TableHead>
-										<TableHead>Thể loại cha</TableHead>
-										<TableHead>Ngày tạo</TableHead>
-										<TableHead className="w-[140px]">Hành động</TableHead>
-									</TableRow>
-								</TableHeader>
-								<TableBody>
-									{bookCategories.map((c: BookCategory) => (
-										<TableRow key={c.id}>
-											<TableCell className="font-medium">{c.name}</TableCell>
-											<TableCell>{c.parent?.name || '-'}</TableCell>
-											<TableCell>
-												{new Date(c.created_at).toLocaleDateString('vi-VN')}
-											</TableCell>
-											<TableCell>
-												<div className="flex gap-2">
-													<Button
-														size="icon"
-														variant="outline"
-														onClick={() => openEdit(c)}
-													>
-														<IconEdit size={16} />
-													</Button>
-													<Button
-														size="icon"
-														variant="destructive"
-														onClick={() => openDelete(c)}
-													>
-														<IconTrash size={16} />
-													</Button>
-												</div>
-											</TableCell>
-										</TableRow>
-									))}
-								</TableBody>
-							</Table>
 
-							{meta && (
+						<div>
+							{meta.totalPages > 1 && (
 								<PaginationWrapper
 									currentPage={meta.page}
 									totalPages={meta.totalPages}
-									onPageChange={(newPage) =>
-										navigate(
-											`/book-categories?page=${newPage}&limit=${meta.limit}`
-										)
-									}
-									className="mt-4"
+									onPageChange={handlePageChange}
 								/>
 							)}
-						</>
-					)}
-				</CardContent>
-			</Card>
-
-			{/* Create Sheet */}
-			<Sheet open={isCreateSheetOpen} onOpenChange={setIsCreateSheetOpen}>
-				<SheetContent className="sm:max-w-xl">
-					<SheetHeader>
-						<SheetTitle>Thêm thể loại</SheetTitle>
-					</SheetHeader>
-					<div className="py-4">
-						<CreateBookCategoryForm
-							onSubmit={handleCreate}
-							onCancel={() => setIsCreateSheetOpen(false)}
-							isLoading={isCreating}
-							categories={(bookCategories || []).filter((c) => !c.parent_id)}
-						/>
+						</div>
 					</div>
-				</SheetContent>
-			</Sheet>
+				)}
+			</div>
 
-			{/* Edit Sheet */}
-			<Sheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
-				<SheetContent className="sm:max-w-xl">
-					<SheetHeader>
-						<SheetTitle>Chỉnh sửa thể loại</SheetTitle>
-					</SheetHeader>
-					<div className="py-4">
-						{categoryToEdit && (
-							<EditBookCategoryForm
-								category={categoryToEdit}
-								onSubmit={handleUpdate}
-								onCancel={() => setIsEditSheetOpen(false)}
-								isLoading={isUpdating}
-								categories={bookCategories}
-							/>
-						)}
-					</div>
-				</SheetContent>
-			</Sheet>
+			<DeleteBookCategoryDialog
+				isOpen={isDeleteDialogOpen}
+				categoryToDelete={categoryToDelete}
+				isDeleting={isDeleting}
+				onClose={closeDeleteDialog}
+				onConfirm={handleDeleteCategory}
+			/>
 
-			{/* Delete Dialog */}
-			<AlertDialog
-				open={isDeleteDialogOpen}
-				onOpenChange={setIsDeleteDialogOpen}
-			>
-				<AlertDialogContent>
-					<AlertDialogHeader>
-						<AlertDialogTitle>Xóa thể loại</AlertDialogTitle>
-						<AlertDialogDescription>
-							Bạn có chắc muốn xóa thể loại
-							<span className="font-semibold"> {categoryToDelete?.name}</span>?
-							Hành động này không thể hoàn tác.
-						</AlertDialogDescription>
-					</AlertDialogHeader>
-					<AlertDialogFooter>
-						<AlertDialogCancel onClick={() => setIsDeleteDialogOpen(false)}>
-							Hủy
-						</AlertDialogCancel>
-						<AlertDialogAction onClick={handleDelete} disabled={isDeleting}>
-							{isDeleting ? 'Đang xóa...' : 'Xóa'}
-						</AlertDialogAction>
-					</AlertDialogFooter>
-				</AlertDialogContent>
-			</AlertDialog>
-		</div>
+			<EditBookCategorySheet
+				isOpen={isEditSheetOpen}
+				categoryToEdit={categoryToEdit}
+				onOpenChange={closeEditSheet}
+				onUpdateCategory={handleUpdateCategory}
+				onClose={closeEditSheet}
+				isUpdating={isUpdating}
+				categories={bookCategories}
+			/>
+		</>
 	);
 };
 

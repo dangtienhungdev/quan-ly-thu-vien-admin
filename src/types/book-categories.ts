@@ -8,7 +8,7 @@ export type BookCategory = {
 	parent_id?: string | null;
 	parent?: { id: string; name: string } | null;
 	children?: Array<{ id: string; name: string }>;
-	created_at: string;
+	createdAt: string;
 	updated_at: string;
 };
 
