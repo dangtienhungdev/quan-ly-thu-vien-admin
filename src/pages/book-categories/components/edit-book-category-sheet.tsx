@@ -36,7 +36,7 @@ export default function EditBookCategorySheet({
 				<SheetHeader>
 					<SheetTitle>Chỉnh sửa thể loại</SheetTitle>
 				</SheetHeader>
-				<div className="py-4">
+				<div className="py-4 px-4">
 					{categoryToEdit && (
 						<EditBookCategoryForm
 							category={categoryToEdit}
